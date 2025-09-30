@@ -3,6 +3,9 @@ import { CheckCircle, Download } from "lucide-react";
 import ExcelTablePreview from "./excel-review";
 import { formatFileSize } from "@/utils/file-helper";
 import { FileData } from "@/types/file-data";
+import { convertFile } from "@/services/convert-service";
+import { downloadBlob } from "@/utils/download-blob";
+import { useState } from "react";
 
 export default function FilePreview({
     file,
@@ -11,38 +14,20 @@ export default function FilePreview({
     file: FileData;
     onReset: () => void;
 }) {
+    const [loading, setLoading] = useState(false);
 
     const handleConvert = async () => {
-        if (!file.file) {
-            alert("No file available for conversion.");
-            return;
-        }
+        if (!file.file) return alert("No file available for conversion");
+        setLoading(true);
 
         try {
-            const formData = new FormData();
-            formData.append("file", file.file);
-
-            const res = await fetch("http://127.0.0.1:8000/convert", {
-                method: "POST",
-                body: formData
-            });
-
-            if (!res.ok) throw new Error("Conversion failed");
-
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "converted_output.txt";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
+            const blob = await convertFile(file.file);
+            downloadBlob(blob, "converted_output.txt");
         } catch (err) {
             console.error(err);
             alert("Failed to convert file");
         }
+        setLoading(false);
     };
 
     return (
@@ -83,17 +68,20 @@ export default function FilePreview({
                     <p className="text-gray-300 mb-6">
                         Your file has been successfully uploaded and is ready for conversion.
                     </p>
-                    <button
-                        onClick={handleConvert}
+                    {loading ? (
+                        <div className="animate-spin mx-auto size-10 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
 
-                        // onClick={onConvert}
-                        className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-                    >
-                        <Download className="w-5 h-5 mr-2" />
-                        Convert File
-                    </button>
+                    ) : (
+                        <button
+                            onClick={handleConvert}
+                            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                        >
+                            <Download className="w-5 h-5 mr-2" />
+                            Convert File
+                        </button>
+                    )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
