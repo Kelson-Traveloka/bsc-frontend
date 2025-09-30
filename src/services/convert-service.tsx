@@ -3,7 +3,7 @@ export const convertFile = async (file: File): Promise<Blob> => {
     formData.append("file", file);
 
     // const res = await fetch("http://127.0.0.1:8000/convert", {
-    const res = await fetch("bsc-be-traveloka.vercel.app/convert", {
+    const res = await fetch("http://bsc-be-traveloka.vercel.app/convert", {
         method: "POST",
         body: formData,
     });
