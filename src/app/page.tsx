@@ -1,4 +1,5 @@
 "use client";
+import * as XLSX from "xlsx";
 import React, { useState, useCallback } from "react";
 import UploadArea from "@/components/upload-area";
 import FilePreview from "@/components/file-review";
@@ -16,13 +17,15 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+
   const handleFileRead = (file: File) => {
     const reader = new FileReader();
+
     reader.onload = (e) => {
-      const text = e.target?.result as string;
       let content: string[][] = [];
 
       if (file.type === "text/csv" || file.name.endsWith(".csv")) {
+        const text = e.target?.result as string;
         const lines = text.split("\n");
         content = lines
           .map((line) => {
@@ -31,9 +34,8 @@ export default function Home() {
             let inQuotes = false;
             for (let i = 0; i < line.length; i++) {
               const char = line[i];
-              if (char === '"') {
-                inQuotes = !inQuotes;
-              } else if (char === "," && !inQuotes) {
+              if (char === '"') inQuotes = !inQuotes;
+              else if (char === "," && !inQuotes) {
                 result.push(current.trim());
                 current = "";
               } else {
@@ -45,13 +47,14 @@ export default function Home() {
           })
           .filter((row) => row.some((cell) => cell.length > 0));
       } else {
-        content = [
-          ["Column A", "Column B", "Column C", "Column D"],
-          ["Sample data will appear here", "after processing", "XLSX/XLS files", "..."],
-          ["Row 2", "Data 2", "Value 2", "Info 2"],
-          ["Row 3", "Data 3", "Value 3", "Info 3"],
-          ["(Preview not available for Excel files)", "", "", ""],
-        ];
+        // XLS/XLSX files
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: "binary" });
+
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+
+        content = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false }) as string[][];
       }
 
       setUploadedFile({
@@ -63,8 +66,14 @@ export default function Home() {
       });
       setIsLoading(false);
     };
-    reader.readAsText(file);
+
+    if (file.type === "text/csv" || file.name.endsWith(".csv")) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsBinaryString(file);
+    }
   };
+
 
   const handleFileUpload = useCallback((file: File) => {
     const allowedTypes = [
