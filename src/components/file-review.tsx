@@ -1,30 +1,48 @@
 "use client";
 import { CheckCircle, Download } from "lucide-react";
 import ExcelTablePreview from "./excel-review";
-
-interface FileData {
-    name: string;
-    size: number;
-    type: string;
-    lastModified: number;
-    content: string[][];
-}
+import { formatFileSize } from "@/utils/file-helper";
+import { FileData } from "@/types/file-data";
 
 export default function FilePreview({
     file,
     onReset,
-    onConvert,
 }: {
     file: FileData;
     onReset: () => void;
-    onConvert: () => void;
 }) {
-    const formatFileSize = (bytes: number) => {
-        if (bytes === 0) return "0 Bytes";
-        const k = 1024;
-        const sizes = ["Bytes", "KB", "MB", "GB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+
+    const handleConvert = async () => {
+        if (!file.file) {
+            alert("No file available for conversion.");
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file.file);
+
+            const res = await fetch("http://127.0.0.1:8000/convert", {
+                method: "POST",
+                body: formData
+            });
+
+            if (!res.ok) throw new Error("Conversion failed");
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "converted_output.txt";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(err);
+            alert("Failed to convert file");
+        }
     };
 
     return (
@@ -66,7 +84,9 @@ export default function FilePreview({
                         Your file has been successfully uploaded and is ready for conversion.
                     </p>
                     <button
-                        onClick={onConvert}
+                        onClick={handleConvert}
+
+                        // onClick={onConvert}
                         className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                     >
                         <Download className="w-5 h-5 mr-2" />

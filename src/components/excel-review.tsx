@@ -28,7 +28,6 @@ export default function ExcelTablePreview({ content }: ExcelTablePreviewProps) {
             <table className="w-full border-collapse table-auto">
                 <thead className="bg-gray-900 sticky top-0 z-10">
                     <tr>
-                        {/* Top-left corner */}
                         <th className="px-4 py-2 text-xs font-medium text-gray-300 uppercase tracking-wider bg-gray-900 border-r border-b border-gray-700 sticky left-0 z-20"></th>
                         {Array.from({ length: maxCols }).map((_, index) => (
                             <th
@@ -50,7 +49,7 @@ export default function ExcelTablePreview({ content }: ExcelTablePreviewProps) {
                             {row.map((cell, cellIndex) => (
                                 <td
                                     key={cellIndex}
-                                    className="px-4 py-2 whitespace-nowrap text-sm text-gray-200 border-r border-gray-700 hover:bg-gray-700 transition-colors"
+                                    className="px-4 py-2 whitespace-nowrap text-sm  text-gray-200 border-r border-gray-700 hover:bg-gray-700 transition-colors"
                                 >
                                     {cell}
                                 </td>

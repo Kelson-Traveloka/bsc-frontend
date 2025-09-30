@@ -3,14 +3,7 @@ import * as XLSX from "xlsx";
 import React, { useState, useCallback } from "react";
 import UploadArea from "@/components/upload-area";
 import FilePreview from "@/components/file-review";
-
-interface FileData {
-  name: string;
-  size: number;
-  type: string;
-  lastModified: number;
-  content: string[][];
-}
+import { FileData } from "@/types/file-data";
 
 export default function Home() {
   const [uploadedFile, setUploadedFile] = useState<FileData | null>(null);
@@ -58,6 +51,7 @@ export default function Home() {
       }
 
       setUploadedFile({
+        file,
         name: file.name,
         size: file.size,
         type: file.type,
@@ -118,10 +112,6 @@ export default function Home() {
     if (files.length > 0) handleFileUpload(files[0]);
   };
 
-  const handleConvert = () => {
-    alert("Convert button clicked! Add your conversion logic here.");
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-4 md:p-8 flex justify-center items-center">
       <div className="max-w-6xl w-full">
@@ -145,7 +135,6 @@ export default function Home() {
           <FilePreview
             file={uploadedFile}
             onReset={() => setUploadedFile(null)}
-            onConvert={handleConvert}
           />
         )}
       </div>
