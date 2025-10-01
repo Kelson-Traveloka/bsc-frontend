@@ -3,9 +3,10 @@ import { File } from "lucide-react";
 
 interface ExcelTablePreviewProps {
     content: string[][];
+    onCellClick?: (rowIndex: number, colLabel: string, cellValue: string) => void;
 }
 
-export default function ExcelTablePreview({ content }: ExcelTablePreviewProps) {
+export default function ExcelTablePreview({ content, onCellClick }: ExcelTablePreviewProps) {
     const maxCols = Math.max(...content.map(row => row.length));
     const normalizedContent = content.map(row => {
         const newRow = [...row];
@@ -49,6 +50,10 @@ export default function ExcelTablePreview({ content }: ExcelTablePreviewProps) {
                             {row.map((cell, cellIndex) => (
                                 <td
                                     key={cellIndex}
+                                    onClick={() =>
+                                        onCellClick &&
+                                        onCellClick(rowIndex, getColumnLabel(cellIndex), cell)
+                                    }
                                     className="px-4 py-2 whitespace-nowrap text-sm  text-gray-200 border-r border-gray-700 hover:bg-gray-700 transition-colors"
                                 >
                                     {cell}

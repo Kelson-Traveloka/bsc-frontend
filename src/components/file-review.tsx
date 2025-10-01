@@ -16,6 +16,10 @@ export default function FilePreview({
 }) {
     const [loading, setLoading] = useState(false);
 
+    const [row, setRow] = useState<number | null>(null);
+    const [col, setCol] = useState<string | null>(null);
+    const [value, setValue] = useState<string>("");
+
     const handleConvert = async () => {
         if (!file.file) return alert("No file available for conversion");
         setLoading(true);
@@ -28,6 +32,16 @@ export default function FilePreview({
             alert("Failed to convert file");
         }
         setLoading(false);
+    };
+
+    const handleCellClick = (
+        rowIndex: number,
+        colLabel: string,
+        cellValue: string
+    ) => {
+        setRow(rowIndex + 1);
+        setCol(colLabel);
+        setValue(cellValue ? cellValue : "");
     };
 
     return (
@@ -56,8 +70,32 @@ export default function FilePreview({
                 </div>
             </div>
 
+            <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-6 flex space-x-4">
+                <input
+                    type="text"
+                    value={row ?? ""}
+                    placeholder="Row"
+                    readOnly
+                    className="px-4 py-2 rounded-md bg-gray-900 text-white w-24"
+                />
+                <input
+                    type="text"
+                    value={col ?? ""}
+                    placeholder="Column"
+                    readOnly
+                    className="px-4 py-2 rounded-md bg-gray-900 text-white w-24"
+                />
+                <input
+                    type="text"
+                    value={value}
+                    placeholder="Value"
+                    readOnly
+                    className="px-4 py-2 rounded-md bg-gray-900 text-white flex-1"
+                />
+            </div>
+
             {/* Excel Table Preview */}
-            <ExcelTablePreview content={file.content} />
+            <ExcelTablePreview content={file.content} onCellClick={handleCellClick} />
 
             {/* Conversion Section */}
             <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-6">
