@@ -14,6 +14,25 @@ export default function FilePreview({
     file: FileData;
     onReset: () => void;
 }) {
+
+    const fieldLabels = [
+        "Account ID",
+        "Opening balance date",
+        "Opening balance direction",
+        "Opening balance amount",
+        "Closing balance date",
+        "Closing balance direction",
+        "Closing balance amount",
+        "Account Currency",
+        "Statement ID",
+    ];
+
+    const [fieldValues, setFieldValues] = useState<string[]>(
+        Array(fieldLabels.length).fill("")
+    );
+
+    const [activeField, setActiveField] = useState<number | null>(0);
+
     const [loading, setLoading] = useState(false);
 
     const [row, setRow] = useState<number | null>(null);
@@ -39,9 +58,15 @@ export default function FilePreview({
         colLabel: string,
         cellValue: string
     ) => {
-        setRow(rowIndex + 1);
-        setCol(colLabel);
-        setValue(cellValue ? cellValue : "");
+        if (activeField === null) return;
+        const newValues = [...fieldValues];
+        newValues[activeField] = cellValue;
+        setFieldValues(newValues);
+
+        // Optionally auto-move to next field:
+        if (activeField < fieldLabels.length - 1) {
+            setActiveField(activeField + 1);
+        }
     };
 
     return (
@@ -70,29 +95,27 @@ export default function FilePreview({
                 </div>
             </div>
 
-            <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-6 flex space-x-4">
-                <input
-                    type="text"
-                    value={row ?? ""}
-                    placeholder="Row"
-                    readOnly
-                    className="px-4 py-2 rounded-md bg-gray-900 text-white w-24"
-                />
-                <input
-                    type="text"
-                    value={col ?? ""}
-                    placeholder="Column"
-                    readOnly
-                    className="px-4 py-2 rounded-md bg-gray-900 text-white w-24"
-                />
-                <input
-                    type="text"
-                    value={value}
-                    placeholder="Value"
-                    readOnly
-                    className="px-4 py-2 rounded-md bg-gray-900 text-white flex-1"
-                />
+            <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {fieldLabels.map((label, index) => (
+                    <div key={index} className="flex flex-col">
+                        <label className="text-gray-300 text-sm mb-1">{label}</label>
+                        <input
+                            type="text"
+                            value={fieldValues[index]}
+                            onChange={(e) => {
+                                const newValues = [...fieldValues];
+                                newValues[index] = e.target.value;
+                                setFieldValues(newValues);
+                            }}
+                            onFocus={() => setActiveField(index)} // select field to fill
+                            placeholder={`Click cell to fill ${label}`}
+                            className={`px-4 py-2 rounded-md bg-gray-900 text-white ${activeField === index ? "ring-2 ring-blue-500" : ""
+                                }`}
+                        />
+                    </div>
+                ))}
             </div>
+
 
             {/* Excel Table Preview */}
             <ExcelTablePreview content={file.content} onCellClick={handleCellClick} />
