@@ -1,12 +1,17 @@
 "use client";
 import { File } from "lucide-react";
+import FollowTooltip from "./follow-tooltip";
+import { useState } from "react";
 
 interface ExcelTablePreviewProps {
     content: string[][];
     onCellClick?: (rowIndex: number, colLabel: string, cellValue: string) => void;
+    activeLabel: string;
 }
 
-export default function ExcelTablePreview({ content, onCellClick }: ExcelTablePreviewProps) {
+export default function ExcelTablePreview({ content, onCellClick, activeLabel }: ExcelTablePreviewProps) {
+    const [isHovering, setIsHovering] = useState(false);
+
     const maxCols = Math.max(...content.map(row => row.length));
     const normalizedContent = content.map(row => {
         const newRow = [...row];
@@ -25,26 +30,27 @@ export default function ExcelTablePreview({ content, onCellClick }: ExcelTablePr
     };
 
     return (
-        <div className="relative bg-gray-800 rounded-2xl shadow-xl border border-gray-700 overflow-auto max-h-[600px]">
+        <div onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+            className="relative bg-white rounded-2xl shadow-xl border border-gray-200 overflow-auto max-h-[600px]">
             <table className="w-full border-collapse table-auto">
-                <thead className="bg-gray-900 sticky top-0 z-10">
+                <thead className="sticky top-0 z-20">
                     <tr>
-                        <th className="px-4 py-2 text-xs font-medium text-gray-300 uppercase tracking-wider bg-gray-900 border-r border-b border-gray-700 sticky left-0 z-20"></th>
+                        <th className="px-4 py-2 text-xs font-medium text-gray-700 uppercase tracking-wider bg-gray-600/10 backdrop-blur-sm border-r border-b border-gray-200 sticky left-0 z-20"></th>
                         {Array.from({ length: maxCols }).map((_, index) => (
                             <th
                                 key={index}
-                                className="px-4 py-2 text-xs font-medium text-gray-300 uppercase tracking-wider border-r border-gray-700 text-center"
+                                className="px-4 py-2 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-600/10 backdrop-blur-sm border-r border-gray-200 text-center"
                             >
                                 {getColumnLabel(index)}
                             </th>
                         ))}
                     </tr>
                 </thead>
-                <tbody className="bg-gray-800 divide-y divide-gray-700">
-                    {normalizedContent.slice(0, 100).map((row, rowIndex) => (
+                <tbody className="bg-white divide-y divide-gray-300">
+                    {normalizedContent.map((row, rowIndex) => (
                         <tr key={rowIndex}>
-                            {/* Row index column (sticky) */}
-                            <td className="px-4 py-2 text-sm text-gray-400 text-center bg-gray-900 border-r border-gray-700 w-12 sticky left-0 z-10">
+                            <td className="px-2 py-2 font-bold text-sm text-gray-700 text-center bg-gray-600/10 backdrop-blur-sm border-r border-gray-200 w-12 sticky left-0 z-10">
                                 {rowIndex + 1}
                             </td>
                             {row.map((cell, cellIndex) => (
@@ -54,7 +60,8 @@ export default function ExcelTablePreview({ content, onCellClick }: ExcelTablePr
                                         onCellClick &&
                                         onCellClick(rowIndex, getColumnLabel(cellIndex), cell)
                                     }
-                                    className="px-4 py-2 whitespace-nowrap text-sm  text-gray-200 border-r border-gray-700 hover:bg-gray-700 transition-colors"
+                                    className="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-r border-gray-200 
+             hover:bg-gray-200/60 active:bg-gray-300 transition-colors cursor-pointer select-none"
                                 >
                                     {cell}
                                 </td>
@@ -63,11 +70,7 @@ export default function ExcelTablePreview({ content, onCellClick }: ExcelTablePr
                     ))}
                 </tbody>
             </table>
-            {content.length > 100 && (
-                <div className="px-6 py-4 bg-gray-900 text-sm text-gray-400">
-                    Showing first 100 rows of {content.length} total rows
-                </div>
-            )}
+            <FollowTooltip text={activeLabel} visible={isHovering && !!activeLabel} />
         </div>
     );
 }

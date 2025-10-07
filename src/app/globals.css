@@ -3,10 +3,14 @@
 @tailwind utilities;
 
 *::-webkit-scrollbar {
-  display: none; 
+  display: none;
 }
 
 * {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+:root {
+  font-family: 'Inter', system-ui, sans-serif;
 }

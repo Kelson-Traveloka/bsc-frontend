@@ -113,12 +113,15 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-4 md:p-8 flex justify-center items-center">
-      <div className="max-w-6xl w-full">
+    <div className="min-h-screen bg-gradient-to-br from-white to-white p-4 md:p-8 flex justify-center items-center">
+      <div className="max-w-5xl w-full">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-3">File Converter</h1>
-          <p className="text-lg text-gray-300">
-            Upload your CSV, XLSX, or XLS files for processing
+          <h1 className="text-4xl font-bold text-black mb-3">
+            Convert Your Bank Statements Instantly
+          </h1>
+          <p className="text-lg text-gray-700">
+            Upload your bank statement and get a ready-to-use Kyriba template in seconds.
+            Fast, accurate, and hassle-free — built to simplify your treasury workflow.
           </p>
         </div>
 
