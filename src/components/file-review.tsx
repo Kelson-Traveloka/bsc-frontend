@@ -17,22 +17,28 @@ export default function FilePreview({
 
     const fieldLabels = [
         "Account ID",
-        "Opening balance date",
-        "Opening balance direction",
+        "Date [Header]",
         "Opening balance amount",
-        "Closing balance date",
-        "Closing balance direction",
-        "Closing balance amount",
         "Account Currency",
         "Statement ID",
     ];
+    const [fieldInfo, setFieldInfo] = useState<
+        { value: string; col: string | null; row: number | null }[]
+    >(Array(fieldLabels.length).fill({ value: "", col: "", row: "" }));
 
-    const [fieldValues, setFieldValues] = useState<string[]>(
-        Array(fieldLabels.length).fill("")
-    );
+    const previewHeader =
+        "1;" +
+        fieldInfo[0].value + ";" + // Account Id
+        "[" + fieldInfo[1]?.col + (fieldInfo[1].col !== "" ? Number(fieldInfo[1]?.row) + 1 : "") + "];" + // Date [Header]
+        ((fieldInfo[2].value !== null && fieldInfo[2].value !== "") ? (Number(fieldInfo[2].value) < 0 ? "D" : "C") : "") + ";" + // Opening Balance Direction
+        fieldInfo[2].value + ";" + // Opening Balance Amount 
+        "[" + fieldInfo[1]?.col + (fieldInfo[1].col !== "" ? Number(fieldInfo[1]?.row) + 1 : "") + "];" + // Date [Header]
+        "[Closing Direction];" +
+        "[Closing Amount];" +
+        fieldInfo[3].value + ";" + // Account Currency 
+        fieldInfo[4].value + ";"; // Statement ID
 
     const [activeField, setActiveField] = useState<number | null>(0);
-
     const [loading, setLoading] = useState(false);
 
     const handleConvert = async () => {
@@ -49,17 +55,14 @@ export default function FilePreview({
         setLoading(false);
     };
 
-    const handleCellClick = (
-        rowIndex: number,
-        colLabel: string,
-        cellValue: string
-    ) => {
+    const handleCellClick = (rowIndex: number, colLabel: string, cellValue: string) => {
         if (activeField === null) return;
-        const newValues = [...fieldValues];
-        newValues[activeField] = cellValue;
-        setFieldValues(newValues);
 
-        if (activeField < fieldLabels.length - 1) {
+        const newInfo = [...fieldInfo];
+        newInfo[activeField] = { value: cellValue, row: rowIndex, col: colLabel };
+        setFieldInfo(newInfo);
+
+        if (activeField < fieldLabels.length) {
             setActiveField(activeField + 1);
         }
     };
@@ -90,30 +93,89 @@ export default function FilePreview({
             </div>
 
             <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="col-span-2 flex justify-end items-center w-full">
+                    <h3 className="font-semibold text-2xl text-gray-400">Header</h3>
+                </div>
                 {fieldLabels.map((label, index) => (
                     <div key={index} className="flex flex-col">
                         <label className="gray-700 text-sm mb-1">{label}</label>
-                        <input
-                            type="text"
-                            value={fieldValues[index]}
-                            onChange={(e) => {
-                                const newValues = [...fieldValues];
-                                newValues[index] = e.target.value;
-                                setFieldValues(newValues);
-                            }}
-                            onFocus={() => setActiveField(index)}
-                            placeholder={`Click cell to fill ${label}`}
-                            className={`px-4 py-2 rounded-sm border-b text-black focus:outline-none ${activeField === index ? "border-gray-600" : "border-gray-300"
-                                }`}
-                        />
+                        <div className="relative flex justify-center items-center">
+                            <input
+                                type="text"
+                                value={fieldInfo[index].value}
+                                onChange={(e) => {
+                                    const newInfo = [...fieldInfo];
+                                    newInfo[index] = {
+                                        ...newInfo[index],
+                                        value: e.target.value,
+                                    };
+                                    setFieldInfo(newInfo);
+                                }}
+                                onFocus={() => setActiveField(index)}
+                                placeholder={`Click cell to fill ${label}`}
+                                className={`w-full px-4 py-2 rounded-sm border-b text-black focus:outline-none ${activeField === index ? "border-gray-600" : "border-gray-300"
+                                    }`}
+                            />
+                            <label className="absolute right-3 text-gray-500">
+                                {((index == 2) && fieldInfo[index].value != null && fieldInfo[index].value != "" ? (Number(fieldInfo[index].value) < 0 ? "(D)" : "(C)") : "")}
+                            </label>
+                        </div>
                     </div>
                 ))}
+                <div className="flex flex-col col-span-2 relative mt-5">
+                    <label className="gray-700 text-sm mb-1 absolute right-3 -top-3 bg-white text-gray-600 px-2">Preview Output Header</label>
+                    <input
+                        type="text"
+                        value={previewHeader}
+                        readOnly
+                        disabled
+                        className="px-4 py-2 rounded-sm border text-gray-600 focus:outline-none border-gray-600/50"
+                    />
+                </div>
+                <div className="col-span-2 flex justify-end items-center w-full mt-3">
+                    <h3 className="font-semibold text-2xl text-gray-400">Transactions</h3>
+                </div>
+                {fieldLabels.map((label, index) => (
+                    <div key={index} className="flex flex-col">
+                        <label className="gray-700 text-sm mb-1">{label}</label>
+                        <div className="relative flex justify-center items-center">
+                            <input
+                                type="text"
+                                value={fieldInfo[index].value}
+                                onChange={(e) => {
+                                    const newInfo = [...fieldInfo];
+                                    newInfo[index] = {
+                                        ...newInfo[index],
+                                        value: e.target.value,
+                                    };
+                                    setFieldInfo(newInfo);
+                                }}
+                                onFocus={() => setActiveField(index)}
+                                placeholder={`Click cell to fill ${label}`}
+                                className={`w-full px-4 py-2 rounded-sm border-b text-black focus:outline-none ${activeField === index ? "border-gray-600" : "border-gray-300"
+                                    }`}
+                            />
+                            <label className="absolute right-3 text-gray-500">
+                                {((index == 2) && fieldInfo[index].value != null && fieldInfo[index].value != "" ? (Number(fieldInfo[index].value) < 0 ? "(D)" : "(C)") : "")}
+                            </label>
+                        </div>
+                    </div>
+                ))}
+                <div className="flex flex-col col-span-2 relative mt-5">
+                    <label className="gray-700 text-sm mb-1 absolute right-3 -top-3 bg-white text-gray-600 px-2">Preview Output Transactions</label>
+                    <input
+                        type="text"
+                        value={previewHeader}
+                        readOnly
+                        disabled
+                        className="px-4 py-2 rounded-sm border text-gray-600 focus:outline-none border-gray-600/50"
+                    />
+                </div>
             </div>
 
             <ExcelTablePreview content={file.content} onCellClick={handleCellClick} activeLabel={activeField !== null ? fieldLabels[activeField] : ""}
             />
 
-            {/* Conversion Section */}
             <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
                 <div className="text-center">
                     <h3 className="text-lg font-semibold text-black mb-2">

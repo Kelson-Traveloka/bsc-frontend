@@ -70,7 +70,7 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel }:
                     ))}
                 </tbody>
             </table>
-            <FollowTooltip text={activeLabel} visible={isHovering && !!activeLabel} />
+            {/* <FollowTooltip text={activeLabel} visible={isHovering && !!activeLabel} /> */}
         </div>
     );
 }
