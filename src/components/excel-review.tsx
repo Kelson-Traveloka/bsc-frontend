@@ -32,7 +32,7 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel }:
     return (
         <div onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
-            className="relative bg-white rounded-2xl shadow-xl border border-gray-200 overflow-auto max-h-[600px]">
+            className="relative bg-white rounded-2xl shadow-md border border-gray-200 overflow-auto max-h-[600px]">
             <table className="w-full border-collapse table-auto">
                 <thead className="sticky top-0 z-20">
                     <tr>
