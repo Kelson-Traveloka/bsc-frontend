@@ -92,7 +92,7 @@ export default function FilePreview({
             const info = fieldInfo[i];
             const displaysValue =
                 !(label.toLowerCase().includes("date") || transactionLabels.includes(label));
- 
+
             if (displaysValue) {
                 mappedData[label] = info.value || "";
             } else if (info.col && info.row !== null) {
@@ -104,13 +104,13 @@ export default function FilePreview({
 
         console.log("🧾 Collected field mapping (matched frontend display):", mappedData);
 
-        // try {
-        //     const blob = await convertFile(file.file);
-        //     downloadBlob(blob, "converted_output.txt");
-        // } catch (err) {
-        //     console.error(err);
-        //     alert("Failed to convert file");
-        // }
+        try {
+            const blob = await convertFile(file.file, mappedData);
+            // downloadBlob(blob, "converted_output.txt");
+        } catch (err) {
+            console.error(err);
+            alert("Failed to convert file");
+        }
         setLoading(false);
     };
 
@@ -158,7 +158,8 @@ export default function FilePreview({
                                 <div className="relative flex justify-center items-center">
                                     <input
                                         type="text"
-                                        value={(title == "Transactions" || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + "" + (fieldInfo[index].row ? (Number(fieldInfo[index].row + 1)) : null) + "]") : fieldInfo[index].value}
+                                        // value={(title == "Transactions" || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + (fieldInfo[index].row ? (Number(fieldInfo[index].row + 1)) : null) + "]") : fieldInfo[index].value}
+                                        value={(title == "Transactions" || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + (fieldInfo[index].row !== null ? (Number(fieldInfo[index].row) + 1) : "") + "]") : fieldInfo[index].value}
                                         readOnly={title == "Transactions" || label.toLowerCase().includes("date")}
                                         onChange={(e) => {
                                             const newInfo = [...fieldInfo];
