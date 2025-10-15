@@ -60,6 +60,7 @@ export default function FilePreview({
             return ";";
         return `[${field.col}${Number(field.row) + 1}];`;
     };
+    
     const previewTransaction =
         "2;NTRF;" +
         fmt(fieldInfo[5]) + // Internal Bank Transaction Code

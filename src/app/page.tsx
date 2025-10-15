@@ -17,7 +17,7 @@ export default function Home() {
     reader.onload = (e) => {
       let content: string[][] = [];
 
-      if (file.type === "text/csv" || file.name.endsWith(".csv")) {
+      if (file.type === "text/csv" || file.name.endsWith(".csv")) { 
         const text = e.target?.result as string;
         const lines = text.split("\n");
         content = lines
@@ -40,15 +40,27 @@ export default function Home() {
           })
           .filter((row) => row.some((cell) => cell.length > 0));
       } else {
-        // XLS/XLSX files
-        const data = e.target?.result;
-        const workbook = XLSX.read(data, { type: "binary" });
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
 
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
+        console.log("Detected sheets:", workbook.SheetNames);
 
-        content = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false }) as string[][];
+        for (const name of workbook.SheetNames) {
+          const sheet = workbook.Sheets[name];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false }) as string[][];
+          if (rows && rows.length > 1 && rows[0].some((c) => c && c.trim() !== "")) {
+            content = rows;
+            console.log("✅ Using sheet:", name);
+            // break;
+          }
+        }
+
+        if (content.length === 0) {
+          console.warn("⚠️ No data found in any sheet");
+        }
       }
+
+      console.log(content);
 
       setUploadedFile({
         file,
@@ -60,14 +72,13 @@ export default function Home() {
       });
       setIsLoading(false);
     };
-
+ 
     if (file.type === "text/csv" || file.name.endsWith(".csv")) {
       reader.readAsText(file);
     } else {
-      reader.readAsBinaryString(file);
+      reader.readAsArrayBuffer(file);
     }
   };
-
 
   const handleFileUpload = useCallback((file: File) => {
     const allowedTypes = [
