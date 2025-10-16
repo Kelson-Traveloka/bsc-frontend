@@ -1,5 +1,4 @@
 "use client";
-import { File } from "lucide-react";
 import FollowTooltip from "./follow-tooltip";
 import { useState } from "react";
 
@@ -60,8 +59,7 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel }:
                                         onCellClick &&
                                         onCellClick(rowIndex, getColumnLabel(cellIndex), cell)
                                     }
-                                    className="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-r border-gray-200 
-             hover:bg-gray-200/60 active:bg-gray-300 transition-colors cursor-pointer select-none"
+                                    className="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-r border-gray-200 hover:bg-gray-200/60 active:bg-gray-300 transition-colors cursor-pointer select-none"
                                 >
                                     {cell}
                                 </td>
@@ -70,7 +68,7 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel }:
                     ))}
                 </tbody>
             </table>
-            {/* <FollowTooltip text={activeLabel} visible={isHovering && !!activeLabel} /> */}
+            <FollowTooltip text={activeLabel} visible={isHovering && !!activeLabel} />
         </div>
     );
 }

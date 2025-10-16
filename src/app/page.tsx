@@ -10,14 +10,14 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-
   const handleFileRead = (file: File) => {
     const reader = new FileReader();
 
     reader.onload = (e) => {
       let content: string[][] = [];
 
-      if (file.type === "text/csv" || file.name.endsWith(".csv")) { 
+      // ✅ CSV HANDLING
+      if (file.type === "text/csv" || file.name.endsWith(".csv")) {
         const text = e.target?.result as string;
         const lines = text.split("\n");
         content = lines
@@ -39,28 +39,66 @@ export default function Home() {
             return result;
           })
           .filter((row) => row.some((cell) => cell.length > 0));
-      } else {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
 
-        console.log("Detected sheets:", workbook.SheetNames);
+        // ✅ XLS / XLSX HANDLING
+      } else if (file.name.endsWith(".xls")) {
+        console.log("INI .XLS")
+        // Old Excel format — must read as binary
+        const binary = e.target?.result as string;
+        const workbook = XLSX.read(binary, {
+          type: "binary",
+          cellDates: true,
+          cellNF: false,
+          cellText: false,
+          raw: true,
+        });
+
+        console.log("📄 Detected sheets:", workbook.SheetNames);
 
         for (const name of workbook.SheetNames) {
           const sheet = workbook.Sheets[name];
-          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false }) as string[][];
-          if (rows && rows.length > 1 && rows[0].some((c) => c && c.trim() !== "")) {
+
+          // Try first with sheet_to_json
+          let rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true }) as string[][];
+
+          // If still empty, fallback to CSV parsing
+          if (!rows || rows.length === 0) {
+            const csv = XLSX.utils.sheet_to_csv(sheet);
+            rows = csv.split("\n").map(r => r.split(","));
+            console.warn("⚠️ sheet_to_json empty, fallback to CSV mode");
+          }
+
+          // Filter out completely empty rows
+          // rows = rows.filter(r => r.some(c => String(c || "").trim() !== ""));
+
+          if (rows.length > 0) {
             content = rows;
-            console.log("✅ Using sheet:", name);
-            // break;
+            console.log(`✅ Extracted data from sheet: ${name}`, rows.slice(0, 100));
+            break;
           }
         }
 
         if (content.length === 0) {
-          console.warn("⚠️ No data found in any sheet");
+          console.warn("⚠️ Still empty after fallback — possible merged cells or special encoding");
+        }
+      } else {
+        console.log("INI .XLSX")
+        // Modern XLSX — read as ArrayBuffer
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+
+        for (const name of workbook.SheetNames) {
+          const sheet = workbook.Sheets[name];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false }) as string[][];
+          if (rows && rows.length > 0) {
+            content = rows;
+            console.log(`✅ Using XLSX sheet: ${name} (rows: ${rows.length})`);
+            break;
+          }
         }
       }
 
-      console.log(content);
+      console.log("✅ Parsed content:", content);
 
       setUploadedFile({
         file,
@@ -72,13 +110,16 @@ export default function Home() {
       });
       setIsLoading(false);
     };
- 
-    if (file.type === "text/csv" || file.name.endsWith(".csv")) {
+
+    if (file.name.endsWith(".xls")) {
+      reader.readAsBinaryString(file);
+    } else if (file.type === "text/csv" || file.name.endsWith(".csv")) {
       reader.readAsText(file);
     } else {
       reader.readAsArrayBuffer(file);
     }
   };
+
 
   const handleFileUpload = useCallback((file: File) => {
     const allowedTypes = [

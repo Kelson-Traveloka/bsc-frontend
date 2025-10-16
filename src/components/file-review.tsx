@@ -3,7 +3,7 @@ import { CheckCircle, ChevronDown, ChevronRight, Download } from "lucide-react";
 import ExcelTablePreview from "./excel-review";
 import { formatFileSize } from "@/utils/file-helper";
 import { FileData } from "@/types/file-data";
-import { convertFile } from "@/services/convert-service";
+import { convertFileInFrontend } from "@/services/convert-service";
 import { downloadBlob } from "@/utils/download-blob";
 import { useEffect, useState } from "react";
 
@@ -60,7 +60,7 @@ export default function FilePreview({
             return ";";
         return `[${field.col}${Number(field.row) + 1}];`;
     };
-    
+
     const previewTransaction =
         "2;NTRF;" +
         fmt(fieldInfo[5]) + // Internal Bank Transaction Code
@@ -106,8 +106,7 @@ export default function FilePreview({
         console.log("🧾 Collected field mapping (matched frontend display):", mappedData);
 
         try {
-            const blob = await convertFile(file.file, mappedData);
-            // downloadBlob(blob, "converted_output.txt");
+            const result = await convertFileInFrontend(file.file, mappedData); 
         } catch (err) {
             console.error(err);
             alert("Failed to convert file");
