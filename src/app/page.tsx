@@ -120,7 +120,6 @@ export default function Home() {
     }
   };
 
-
   const handleFileUpload = useCallback((file: File) => {
     const allowedTypes = [
       "text/csv",
