@@ -19,7 +19,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-inter antialiased">{children}</body>
+      <body className="font-inter antialiased">
+        {children}
+      </body>
     </html>
   );
 }

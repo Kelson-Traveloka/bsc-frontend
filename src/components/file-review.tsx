@@ -103,8 +103,6 @@ export default function FilePreview({
             }
         });
 
-        console.log("🧾 Collected field mapping (matched frontend display):", mappedData);
-
         try {
             const result = await convertFileInFrontend(file.file, mappedData); 
         } catch (err) {

@@ -42,8 +42,6 @@ export default function Home() {
 
         // ✅ XLS / XLSX HANDLING
       } else if (file.name.endsWith(".xls")) {
-        console.log("INI .XLS")
-        // Old Excel format — must read as binary
         const binary = e.target?.result as string;
         const workbook = XLSX.read(binary, {
           type: "binary",
@@ -52,8 +50,6 @@ export default function Home() {
           cellText: false,
           raw: true,
         });
-
-        console.log("📄 Detected sheets:", workbook.SheetNames);
 
         for (const name of workbook.SheetNames) {
           const sheet = workbook.Sheets[name];
@@ -73,7 +69,6 @@ export default function Home() {
 
           if (rows.length > 0) {
             content = rows;
-            console.log(`✅ Extracted data from sheet: ${name}`, rows.slice(0, 100));
             break;
           }
         }
@@ -82,8 +77,6 @@ export default function Home() {
           console.warn("⚠️ Still empty after fallback — possible merged cells or special encoding");
         }
       } else {
-        console.log("INI .XLSX")
-        // Modern XLSX — read as ArrayBuffer
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: "array" });
 
@@ -92,13 +85,10 @@ export default function Home() {
           const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false }) as string[][];
           if (rows && rows.length > 0) {
             content = rows;
-            console.log(`✅ Using XLSX sheet: ${name} (rows: ${rows.length})`);
             break;
           }
         }
       }
-
-      console.log("✅ Parsed content:", content);
 
       setUploadedFile({
         file,
@@ -164,7 +154,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-white p-4 md:p-8 flex justify-center items-center">
+    <div className="min-h-screen bg-transparent p-4 md:p-8 flex justify-center items-center">
       <div className="max-w-5xl w-full">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-black mb-3">
