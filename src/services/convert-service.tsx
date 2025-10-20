@@ -1,7 +1,15 @@
+import { MappingGroupHT } from "@/types/mapping-information";
 import { parseCell } from "@/utils/parse-cell";
 import { safeParseDate } from "@/utils/parse-date";
 import { toNumber } from "@/utils/to-number";
 import * as XLSX from "xlsx";
+
+export type MappingField = Record<string, string>;
+export type ExcelRow = Record<string, string | number | Date | null | undefined>;
+export type GroupHT = Record<string, MappingGroupHT[]>;
+export type MappedTransactionRow = Partial<MappingGroupHT> & {
+  "Transaction Date"?: Date;
+};
 
 function fmtAmount(x: number): string {
   return Number.isInteger(x) ? `${x}` : x.toFixed(2);
@@ -9,7 +17,7 @@ function fmtAmount(x: number): string {
 
 export async function convertFileInFrontend(
   file: File,
-  mapping: Record<string, any>
+  mapping: MappingField
 ): Promise<void> {
   const data = await file.arrayBuffer();
   const wb = XLSX.read(data, {
@@ -17,7 +25,7 @@ export async function convertFileInFrontend(
     raw: true
   });
   const sheet = wb.Sheets[wb.SheetNames[0]];
-  let df = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 });
+  let df: string[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
   const [, headerRow] = parseCell(mapping["Date [Header] *"]);
   if (headerRow == null) throw new Error("Invalid mapping: missing Date [Header] *");
@@ -25,9 +33,9 @@ export async function convertFileInFrontend(
   const headerValues = df[headerRow];
   df = df.slice(headerRow + 1);
 
-  const rows = df.map((row) => {
-    const obj: Record<string, any> = {};
-    headerValues.forEach((key: any, i: number) => (obj[key] = row[i]));
+  const rows: ExcelRow[] = df.map((row) => {
+    const obj: ExcelRow = {};
+    headerValues.forEach((key, i) => (obj[key] = row[i]));
     return obj;
   });
 
@@ -38,21 +46,30 @@ export async function convertFileInFrontend(
     if (colIdx != null && headerValues[colIdx]) colMap[label] = headerValues[colIdx];
   }
 
-  const renamed = rows.map((r) => {
-    const newRow: Record<string, any> = {};
-    for (const [label, origCol] of Object.entries(colMap)) {
-      newRow[label] = r[origCol];
-    }
+  const renamed: Partial<MappedTransactionRow>[] = rows.map((r) => {
+    const newRow: Partial<MappedTransactionRow> = {};
+
+    (Object.entries(colMap) as [keyof MappedTransactionRow, string][]).forEach(([label, origCol]) => {
+      const value = r[origCol];
+      if (value !== undefined && value !== null) {
+        (newRow as Record<keyof MappedTransactionRow, unknown>)[label] = value;
+      }
+    });
+
     return newRow;
   });
 
   for (const r of renamed) {
     const parsed = safeParseDate(r["Date [Header] *"]);
-    if (!parsed) continue; // skip invalid
+    if (!parsed) continue;
     r["Transaction Date"] = parsed;
-    for (const key of ["Debit Amount *", "Credit Amount *"]) {
-      if (r[key] != null) r[key] = toNumber(r[key]);
-    }
+
+    (["Debit Amount *", "Credit Amount *"] as const).forEach((key) => {
+      const val = r[key];
+      if (val != null) {
+        r[key] = toNumber(val);
+      }
+    });
   }
 
   const accountNumber = mapping["Account ID *"];
@@ -61,7 +78,7 @@ export async function convertFileInFrontend(
   const statementId = mapping["Statement ID *"];
   let openingBalance = toNumber(balance);
 
-  const grouped: Record<string, any[]> = {};
+  const grouped: Record<string, MappedTransactionRow[]> = {};
   for (const row of renamed) {
     const d = row["Transaction Date"];
     if (!d || isNaN(d.getTime())) continue;

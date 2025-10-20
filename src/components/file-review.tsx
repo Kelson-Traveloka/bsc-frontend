@@ -5,7 +5,9 @@ import { formatFileSize } from "@/utils/file-helper";
 import { FileData } from "@/types/file-data";
 import { convertFileInFrontend } from "@/services/convert-service";
 import { downloadBlob } from "@/utils/download-blob";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { BANKS } from "@/constants/bank";
+import { MappingGroupHT } from "@/types/mapping-information";
 
 export default function FilePreview({
     file,
@@ -31,8 +33,8 @@ export default function FilePreview({
         "Transaction Original Amount",
         "Transaction Original Amount Currency",
     ];
-
     const [isTransactionOpen, setIsTransactionOpen] = useState(false);
+    const [invalidFields, setInvalidFields] = useState<number[]>([]);
     const [fieldInfo, setFieldInfo] = useState<
         { value: string; col: string | null; row: number | null }[]
     >(
@@ -87,7 +89,25 @@ export default function FilePreview({
         setLoading(true);
 
         const allLabels = [...headerLabels, ...transactionLabels];
-        const mappedData: Record<string, string | null> = {};
+
+        const emptyIndexes = allLabels
+            .map((label, i) => ({ label, i }))
+            .filter(({ label, i }) => label.includes("*") && (!fieldInfo[i].value || fieldInfo[i].value.trim() === ""))
+            .map(({ i }) => i);
+
+        if (emptyIndexes.length > 0) {
+            setInvalidFields(emptyIndexes);
+
+            const firstInvalid = document.querySelector(`[data-field-index="${emptyIndexes[0]}"]`);
+            if (firstInvalid) firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            setLoading(false);
+            return;
+        }
+
+        setInvalidFields([]);
+
+        const mappedData: Record<string, string> = {};
 
         allLabels.forEach((label, i) => {
             const info = fieldInfo[i];
@@ -104,7 +124,8 @@ export default function FilePreview({
         });
 
         try {
-            const result = await convertFileInFrontend(file.file, mappedData); 
+            console.log(mappedData)
+            const result = await convertFileInFrontend(file.file, mappedData);
         } catch (err) {
             console.error(err);
             alert("Failed to convert file");
@@ -116,7 +137,7 @@ export default function FilePreview({
         if (activeField === null) return;
 
         const newInfo = [...fieldInfo];
-        newInfo[activeField] = { value: cellValue, row: rowIndex, col: colLabel };
+        newInfo[activeField] = { value: cellValue.trim(), row: rowIndex, col: colLabel };
         setFieldInfo(newInfo);
 
         if (activeField < fieldInfo.length) {
@@ -124,90 +145,115 @@ export default function FilePreview({
         }
     };
 
+    const handleBankSelect = (bank: typeof BANKS[number]) => {
+        const newInfo = [...fieldInfo];
+        newInfo[0].value = bank.value["Account ID *"];
+        if (bank.value.currency) newInfo[3].value = bank.value.currency;
+        if (bank.value.statementId) newInfo[4].value = bank.value.statementId;
+
+        setFieldInfo(newInfo);
+    };
+
+
     const renderFieldInputs = (
         labels: string[],
         startIndex: number,
         title: string
-    ) => (
-        <div className="w-full space-y-4">
-            <div className="flex justify-end items-center w-full">
-                <h3 className="font-semibold text-2xl text-gray-400">{title}</h3>
-                {title === "Transactions" && (
-                    <button
-                        onClick={() => setIsTransactionOpen(!isTransactionOpen)}
-                        className="flex w-fit justify-between items-center my-3 p-3 pt-3.5 text-left"
+    ) => {
+        const isHeaderGroup = title === "Header";
+        const isActiveInThisGroup = activeField !== null
+            ? isHeaderGroup
+                ? activeField < headerLabels.length
+                : activeField >= headerLabels.length
+            : false;
+
+        return (
+            <div className="w-full space-y-4 scroll-mt-20">
+                <div className="flex justify-end items-center w-full">
+                    <h3
+                        className={`font-semibold text-2xl ${isActiveInThisGroup ? "text-gray-700" : "text-gray-400"}`}
                     >
-                        {isTransactionOpen ? (
-                            <ChevronDown className="w-5 h-5 text-gray-400" />
-                        ) : (
-                            <ChevronRight className="w-5 h-5 text-gray-400" />
-                        )}
-                    </button>
+                        {title}
+                    </h3>
+                    {title === "Transactions" && (
+                        <button
+                            onClick={() => setIsTransactionOpen(!isTransactionOpen)}
+                            className="flex w-fit justify-between items-center my-3 p-3 pt-3.5 text-left"
+                        >
+                            {isTransactionOpen ? (
+                                <ChevronDown className="w-5 h-5 text-gray-400" />
+                            ) : (
+                                <ChevronRight className="w-5 h-5 text-gray-400" />
+                            )}
+                        </button>
+                    )}
+                </div>
+
+                {(title !== "Transactions" || isTransactionOpen) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {labels.map((label, i) => {
+                            const index = startIndex + i;
+                            return (
+                                <div key={index} className="flex flex-col">
+                                    <label className={`text-sm mb-1 ${invalidFields.includes(index) ? "text-red-600 font-semibold" : "text-gray-700"}`}>{label}</label>
+                                    <div className="relative flex justify-center items-center">
+                                        <input
+                                            type="text"
+                                            data-field-index={index}
+                                            value={(title == "Transactions" || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + (fieldInfo[index].row !== null ? (Number(fieldInfo[index].row) + 1) : "") + "]") : fieldInfo[index].value}
+                                            readOnly={title == "Transactions" || label.toLowerCase().includes("date")}
+                                            onChange={(e) => {
+                                                const newInfo = [...fieldInfo];
+                                                newInfo[index] = {
+                                                    ...newInfo[index],
+                                                    value: e.target.value,
+                                                };
+                                                setFieldInfo(newInfo);
+                                            }}
+                                            onFocus={() => setActiveField(index)}
+                                            placeholder={`Click cell to fill ${label}`}
+                                            className={`w-full px-4 py-2 rounded-sm border-b text-black focus:outline-none 
+                                             ${invalidFields.includes(index)
+                                                    ? "border-red-500 focus:border-red-600"
+                                                    : activeField === index
+                                                        ? "border-gray-600"
+                                                        : "border-gray-300"
+                                                }
+                                            ${(title == "Transactions" || label.toLowerCase().includes("date")) && "cursor-pointer"}`}
+                                        />
+                                        <label className="absolute right-3 text-gray-500">
+                                            {(i == 2 && title != "Transactions" &&
+                                                fieldInfo[index].value !== "" &&
+                                                fieldInfo[index].value !== null
+                                                ? Number(fieldInfo[index].value) < 0
+                                                    ? "(D)"
+                                                    : "(C)"
+                                                : "")}
+                                        </label>
+
+                                        {(title === "Transactions" || label.toLowerCase().includes("date")) &&
+                                            (fieldInfo[index].col || fieldInfo[index].row) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newInfo = [...fieldInfo];
+                                                        newInfo[index] = { ...newInfo[index], col: "", row: null, value: "" };
+                                                        setFieldInfo(newInfo);
+                                                    }}
+                                                    className="absolute right-2 text-gray-400 hover:text-gray-700 text-sm p-1"
+                                                >
+                                                    ✕
+                                                </button>
+                                            )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 )}
             </div>
-
-            {(title !== "Transactions" || isTransactionOpen) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {labels.map((label, i) => {
-                        const index = startIndex + i;
-                        return (
-                            <div key={index} className="flex flex-col">
-                                <label className="gray-700 text-sm mb-1">{label}</label>
-                                <div className="relative flex justify-center items-center">
-                                    <input
-                                        type="text"
-                                        // value={(title == "Transactions" || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + (fieldInfo[index].row ? (Number(fieldInfo[index].row + 1)) : null) + "]") : fieldInfo[index].value}
-                                        value={(title == "Transactions" || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + (fieldInfo[index].row !== null ? (Number(fieldInfo[index].row) + 1) : "") + "]") : fieldInfo[index].value}
-                                        readOnly={title == "Transactions" || label.toLowerCase().includes("date")}
-                                        onChange={(e) => {
-                                            const newInfo = [...fieldInfo];
-                                            newInfo[index] = {
-                                                ...newInfo[index],
-                                                value: e.target.value,
-                                            };
-                                            setFieldInfo(newInfo);
-                                        }}
-                                        onFocus={() => setActiveField(index)}
-                                        placeholder={`Click cell to fill ${label}`}
-                                        className={`w-full px-4 py-2 rounded-sm border-b text-black focus:outline-none 
-                                            ${activeField === index
-                                                ? "border-gray-600"
-                                                : "border-gray-300"
-                                            }
-                                            ${(title == "Transactions" || label.toLowerCase().includes("date")) && "cursor-pointer"}`}
-                                    />
-                                    <label className="absolute right-3 text-gray-500">
-                                        {(i == 2 && title != "Transactions" &&
-                                            fieldInfo[index].value !== "" &&
-                                            fieldInfo[index].value !== null
-                                            ? Number(fieldInfo[index].value) < 0
-                                                ? "(D)"
-                                                : "(C)"
-                                            : "")}
-                                    </label>
-
-                                    {(title === "Transactions" || label.toLowerCase().includes("date")) &&
-                                        (fieldInfo[index].col || fieldInfo[index].row) && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const newInfo = [...fieldInfo];
-                                                    newInfo[index] = { ...newInfo[index], col: "", row: null, value: "" };
-                                                    setFieldInfo(newInfo);
-                                                }}
-                                                className="absolute right-2 text-gray-400 hover:text-gray-700 text-sm p-1"
-                                            >
-                                                ✕
-                                            </button>
-                                        )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-        </div>
-    );
+        )
+    };
 
 
     return (
@@ -232,6 +278,21 @@ export default function FilePreview({
                     >
                         Upload Different File
                     </button>
+                </div>
+            </div>
+
+            <div className="bg-transparent rounded-2xl shadow-md border border-gray-200 p-6 overflow-x-auto">
+                <div className="flex items-center justify-start gap-4 w-full">
+                    {BANKS.map((bank) => (
+                        <div
+                            key={bank.code}
+                            onClick={() => handleBankSelect(bank)}
+                            className="cursor-pointer hover:shadow-sm border rounded-md w-48 flex-shrink-0 p-3 px-5 hover:bg-zinc-200/50 flex flex-col justify-center items-start transition-all duration-200"
+                        >
+                            <span className="font-semibold">{bank.code}</span>
+                            <span className="text-gray-600 text-sm text-nowrap truncate w-full" title={bank.name}>{bank.name}</span>
+                        </div>
+                    ))}
                 </div>
             </div>
 

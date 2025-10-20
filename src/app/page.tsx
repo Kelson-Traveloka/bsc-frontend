@@ -15,8 +15,7 @@ export default function Home() {
 
     reader.onload = (e) => {
       let content: string[][] = [];
-
-      // ✅ CSV HANDLING
+ 
       if (file.type === "text/csv" || file.name.endsWith(".csv")) {
         const text = e.target?.result as string;
         const lines = text.split("\n");
