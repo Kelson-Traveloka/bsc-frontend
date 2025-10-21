@@ -33,16 +33,17 @@ export default function FilePreview({
         "Transaction Original Amount",
         "Transaction Original Amount Currency",
     ];
+
+    const [selectedBank, setSelectedBank] = useState<string | null>(null);
     const [isTransactionOpen, setIsTransactionOpen] = useState(false);
     const [invalidFields, setInvalidFields] = useState<number[]>([]);
     const [fieldInfo, setFieldInfo] = useState<
         { value: string; col: string | null; row: number | null }[]
     >(
-        Array(headerLabels.length + transactionLabels.length).fill({
-            value: "",
-            col: "",
-            row: null,
-        })
+        Array.from(
+            { length: headerLabels.length + transactionLabels.length },
+            () => ({ value: "", col: "", row: null })
+        )
     );
 
     const previewHeader =
@@ -84,6 +85,39 @@ export default function FilePreview({
         }
     }, [activeField]);
 
+    const parseExcelCell = (cell: string): { col: string | null; row: number | null } => {
+        if (!cell || !cell.startsWith("[")) return { col: null, row: null };
+
+        const match = cell.match(/\[([A-Z]+)(\d+)?\]/i);
+        if (!match) return { col: null, row: null };
+
+        return {
+            col: match[1].toUpperCase(),
+            row: match[2] ? Number(match[2]) : null,
+        };
+    };
+
+    const columnLetterToIndex = (col: string): number => {
+        let index = 0;
+        for (let i = 0; i < col.length; i++) {
+            index = index * 26 + (col.charCodeAt(i) - "A".charCodeAt(0) + 1);
+        }
+        return index - 1;
+    };
+
+    const getCellValue = (
+        col: string | null,
+        row: number | null,
+        content: string[][]
+    ): string => {
+        if (!col || row === null) return "";
+        const colIndex = columnLetterToIndex(col);
+        const rowIndex = row - 1;
+        if (rowIndex < 0 || rowIndex >= content.length) return "";
+        if (colIndex < 0 || colIndex >= content[rowIndex].length) return "";
+        return content[rowIndex][colIndex] ?? "";
+    };
+
     const handleConvert = async () => {
         if (!file.file) return alert("No file available for conversion");
         setLoading(true);
@@ -91,8 +125,8 @@ export default function FilePreview({
         const allLabels = [...headerLabels, ...transactionLabels];
 
         const emptyIndexes = allLabels
-            .map((label, i) => ({ label, i }))
-            .filter(({ label, i }) => label.includes("*") && (!fieldInfo[i].value || fieldInfo[i].value.trim() === ""))
+            .map((label, i) => ({ label, i }))                                                    
+            .filter(({ label, i }) => label.includes("*") && ((!fieldInfo[i].value || fieldInfo[i].value.trim() === "") && (fieldInfo[i].col?.trim() === "" || !fieldInfo[i].col)))
             .map(({ i }) => i);
 
         if (emptyIndexes.length > 0) {
@@ -146,14 +180,42 @@ export default function FilePreview({
     };
 
     const handleBankSelect = (bank: typeof BANKS[number]) => {
+        setSelectedBank(bank.code);
         const newInfo = [...fieldInfo];
-        newInfo[0].value = bank.value["Account ID *"];
-        if (bank.value.currency) newInfo[3].value = bank.value.currency;
-        if (bank.value.statementId) newInfo[4].value = bank.value.statementId;
 
+        newInfo[0].value = bank.value["Account ID *"] ? getCellValue(parseExcelCell(bank.value["Account ID *"]).col, parseExcelCell(bank.value["Account ID *"]).row, file.content) : "";
+
+        newInfo[1].col = bank.value["Date [Header] *"] ? parseExcelCell(bank.value["Date [Header] *"]).col : ""
+        newInfo[1].row = bank.value["Date [Header] *"] ? parseExcelCell(bank.value["Date [Header] *"]).row : null
+
+        newInfo[2].value = bank.value["Opening balance amount *"] ? getCellValue(parseExcelCell(bank.value["Opening balance amount *"]).col, parseExcelCell(bank.value["Opening balance amount *"]).row, file.content) : "";
+        newInfo[3].value = bank.value["Account Currency *"] ? getCellValue(parseExcelCell(bank.value["Account Currency *"]).col, parseExcelCell(bank.value["Account Currency *"]).row, file.content) : "";
+        newInfo[4].value = bank.value["Statement ID *"] ? getCellValue(parseExcelCell(bank.value["Statement ID *"]).col, parseExcelCell(bank.value["Statement ID *"]).row, file.content) : "";
+
+        newInfo[5].col = bank.value["Internal Bank Transaction Code"] ? parseExcelCell(bank.value["Internal Bank Transaction Code"]).col : ""
+        newInfo[5].row = bank.value["Internal Bank Transaction Code"] ? parseExcelCell(bank.value["Internal Bank Transaction Code"]).row : null
+
+        newInfo[6].col = bank.value["Debit Amount *"] ? parseExcelCell(bank.value["Debit Amount *"]).col : ""
+        newInfo[6].row = bank.value["Debit Amount *"] ? parseExcelCell(bank.value["Debit Amount *"]).row : null
+
+        newInfo[7].col = bank.value["Credit Amount *"] ? parseExcelCell(bank.value["Credit Amount *"]).col : ""
+        newInfo[7].row = bank.value["Credit Amount *"] ? parseExcelCell(bank.value["Credit Amount *"]).row : null
+
+        newInfo[8].col = bank.value["Description"] ? parseExcelCell(bank.value["Description"]).col : ""
+        newInfo[8].row = bank.value["Description"] ? parseExcelCell(bank.value["Description"]).row : null
+
+        newInfo[9].col = bank.value["Reference"] ? parseExcelCell(bank.value["Reference"]).col : ""
+        newInfo[9].row = bank.value["Reference"] ? parseExcelCell(bank.value["Reference"]).row : null
+
+        newInfo[10].col = bank.value["Transaction Original Amount"] ? parseExcelCell(bank.value["Transaction Original Amount"]).col : ""
+        newInfo[10].row = bank.value["Transaction Original Amount"] ? parseExcelCell(bank.value["Transaction Original Amount"]).row : null
+
+        newInfo[11].col = bank.value["Transaction Original Amount Currency"] ? parseExcelCell(bank.value["Transaction Original Amount Currency"]).col : ""
+        newInfo[11].row = bank.value["Transaction Original Amount Currency"] ? parseExcelCell(bank.value["Transaction Original Amount Currency"]).row : null
+
+        setIsTransactionOpen(true);
         setFieldInfo(newInfo);
     };
-
 
     const renderFieldInputs = (
         labels: string[],
@@ -255,7 +317,6 @@ export default function FilePreview({
         )
     };
 
-
     return (
         <div className="space-y-6">
             <div className="bg-transparent rounded-2xl shadow-md border border-gray-200 p-6">
@@ -282,17 +343,29 @@ export default function FilePreview({
             </div>
 
             <div className="bg-transparent rounded-2xl shadow-md border border-gray-200 p-6 overflow-x-auto">
-                <div className="flex items-center justify-start gap-4 w-full">
-                    {BANKS.map((bank) => (
-                        <div
-                            key={bank.code}
-                            onClick={() => handleBankSelect(bank)}
-                            className="cursor-pointer hover:shadow-sm border rounded-md w-48 flex-shrink-0 p-3 px-5 hover:bg-zinc-200/50 flex flex-col justify-center items-start transition-all duration-200"
-                        >
-                            <span className="font-semibold">{bank.code}</span>
-                            <span className="text-gray-600 text-sm text-nowrap truncate w-full" title={bank.name}>{bank.name}</span>
-                        </div>
-                    ))}
+                <div className="flex items-center justify-start gap-4 w-max">
+                    {BANKS.map((bank) => {
+                        const isSelected = selectedBank === bank.code;
+                        return (
+                            <div
+                                key={bank.code}
+                                onClick={() => handleBankSelect(bank)}
+                                className={`cursor-pointer border rounded-md w-48 flex-shrink-0 p-3 px-5 flex flex-col justify-center items-start transition-all duration-200
+                        ${isSelected
+                                        ? "bg-gray-100 border-gray-400 shadow-md"
+                                        : "hover:bg-zinc-200/50 hover:shadow-sm border-gray-300"
+                                    }`}
+                            >
+                                <span className="font-semibold">{bank.code}</span>
+                                <span
+                                    className="text-gray-600 text-sm text-nowrap truncate w-full"
+                                    title={bank.name}
+                                >
+                                    {bank.name}
+                                </span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 

@@ -149,7 +149,4 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-    // {
-    //     code: "BAY",
-    // },
 ] as const;
