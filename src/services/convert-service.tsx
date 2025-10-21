@@ -18,7 +18,14 @@ function fmtAmount(x: number): string {
 export async function convertFileInFrontend(
   file: File,
   mapping: MappingField
-): Promise<void> {
+): Promise<{
+  url: string;
+  summary: {
+    totalRows: number;
+    validTransactions: number;
+    invalidTransactions: number;
+  };
+}> {
   const data = await file.arrayBuffer();
   const wb = XLSX.read(data, {
     type: "array", cellDates: false,
@@ -28,10 +35,11 @@ export async function convertFileInFrontend(
   let df: string[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
   const [, headerRow] = parseCell(mapping["Date [Header] *"]);
+  console.log(headerRow)
   if (headerRow == null) throw new Error("Invalid mapping: missing Date [Header] *");
 
-  const headerValues = df[headerRow];
-  df = df.slice(headerRow + 1);
+  const headerValues = df[headerRow - 1];
+  df = df.slice(headerRow);
 
   const rows: ExcelRow[] = df.map((row) => {
     const obj: ExcelRow = {};
@@ -59,9 +67,16 @@ export async function convertFileInFrontend(
     return newRow;
   });
 
+  let totalRows = renamed.length;
+  let validTransactions = 0;
+  let invalidTransactions = 0;
+
   for (const r of renamed) {
     const parsed = safeParseDate(r["Date [Header] *"]);
-    if (!parsed) continue;
+    if (!parsed) {
+      invalidTransactions++;
+      continue;
+    }
     r["Transaction Date"] = parsed;
 
     (["Debit Amount *", "Credit Amount *"] as const).forEach((key) => {
@@ -70,6 +85,8 @@ export async function convertFileInFrontend(
         r[key] = toNumber(val);
       }
     });
+
+    validTransactions++;
   }
 
   const accountNumber = mapping["Account ID *"];
@@ -133,12 +150,20 @@ export async function convertFileInFrontend(
 
   const blob = new Blob([outputLines.join("\n")], { type: "text/plain" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = file.name.replace(/\.\w+$/, "_converted.txt");
-  a.style.display = "none";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  return {
+    url,
+    summary: {
+      totalRows: toNumber(totalRows),
+      validTransactions: validTransactions,
+      invalidTransactions: invalidTransactions
+    }
+  };
+  // const a = document.createElement("a");
+  // a.href = url;
+  // a.download = file.name.replace(/\.\w+$/, "_converted.txt");
+  // a.style.display = "none";
+  // document.body.appendChild(a);
+  // a.click();
+  // document.body.removeChild(a);
+  // URL.revokeObjectURL(url);
 }

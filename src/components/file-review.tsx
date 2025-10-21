@@ -1,13 +1,11 @@
 "use client";
-import { CheckCircle, ChevronDown, ChevronRight, Download } from "lucide-react";
+import { CheckCircle, ChevronDown, ChevronRight, Download, RefreshCw } from "lucide-react";
 import ExcelTablePreview from "./excel-review";
 import { formatFileSize } from "@/utils/file-helper";
 import { FileData } from "@/types/file-data";
 import { convertFileInFrontend } from "@/services/convert-service";
-import { downloadBlob } from "@/utils/download-blob";
 import { useEffect, useRef, useState } from "react";
 import { BANKS } from "@/constants/bank";
-import { MappingGroupHT } from "@/types/mapping-information";
 
 export default function FilePreview({
     file,
@@ -34,6 +32,7 @@ export default function FilePreview({
         "Transaction Original Amount Currency",
     ];
 
+    const [convertedFileResult, setConvertedFileResult] = useState<{ url: string, summary: { totalRows: number, validTransactions: number, invalidTransactions: number } } | null>(null);
     const [selectedBank, setSelectedBank] = useState<string | null>(null);
     const [isTransactionOpen, setIsTransactionOpen] = useState(false);
     const [invalidFields, setInvalidFields] = useState<number[]>([]);
@@ -125,7 +124,7 @@ export default function FilePreview({
         const allLabels = [...headerLabels, ...transactionLabels];
 
         const emptyIndexes = allLabels
-            .map((label, i) => ({ label, i }))                                                    
+            .map((label, i) => ({ label, i }))
             .filter(({ label, i }) => label.includes("*") && ((!fieldInfo[i].value || fieldInfo[i].value.trim() === "") && (fieldInfo[i].col?.trim() === "" || !fieldInfo[i].col)))
             .map(({ i }) => i);
 
@@ -160,6 +159,7 @@ export default function FilePreview({
         try {
             console.log(mappedData)
             const result = await convertFileInFrontend(file.file, mappedData);
+            setConvertedFileResult(result);
         } catch (err) {
             console.error(err);
             alert("Failed to convert file");
@@ -406,26 +406,54 @@ export default function FilePreview({
             />
 
             <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-                <div className="text-center">
-                    <h3 className="text-lg font-semibold text-black mb-2">
-                        Ready to Convert
-                    </h3>
-                    <p className="gray-700 mb-6">
-                        Your file has been successfully uploaded and is ready for conversion.
-                    </p>
-                    {loading ? (
-                        <div className="animate-spin mx-auto size-10 border-4 border-gray-500 border-t-transparent rounded-full mb-4"></div>
+                {convertedFileResult ? (
+                    <div className="text-center">
+                        <div>
 
-                    ) : (
-                        <button
-                            onClick={handleConvert}
-                            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold rounded-xl hover:from-gray-600 hover:to-gray-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                        </div>
+                        <h3 className="text-lg font-semibold text-black mb-2">
+                            Conversion Complete 🎉
+                        </h3>
+                        <p className="gray-700 mb-5">
+                            Your file has been successfully converted and is ready for download.
+                        </p>
+                        <a
+                            href={convertedFileResult.url}
+                            download={`${file.name.replace(/\.\w+$/, "")}_converted.txt`}
+                            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                         >
                             <Download className="w-5 h-5 mr-2" />
-                            Convert File
-                        </button>
-                    )}
-                </div>
+                            Download Converted File
+                        </a>
+                        <div className="flex gap-5 justify-center items-center mt-6">
+                            <label className="text-gray-700 text-sm border-r pr-5">Total Transaction: {convertedFileResult.summary.totalRows} Transaction(s)</label>
+                            <label className="text-green-600 text-sm border-r pr-5">Valid Transaction: {convertedFileResult.summary.validTransactions} Transaction(s)</label>
+                            <label className="text-red-600 text-sm pr-6">Invalid Transaction: {convertedFileResult.summary.invalidTransactions} Transaction(s)</label>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center">
+                        <h3 className="text-lg font-semibold text-black mb-2">
+                            Ready to Convert
+                        </h3>
+                        <p className="gray-700 mb-6">
+                            Your file has been successfully uploaded and is ready for conversion.
+                        </p>
+                        {loading ? (
+                            <div className="animate-spin mx-auto size-10 border-4 border-gray-500 border-t-transparent rounded-full mb-4"></div>
+
+                        ) : (
+                            <button
+                                onClick={handleConvert}
+                                className="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold rounded-xl hover:from-gray-600 hover:to-gray-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                            >
+                                <RefreshCw className="group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2" />
+                                Convert File
+                            </button>
+                        )}
+                    </div>
+
+                )}
             </div>
         </div >
     );
