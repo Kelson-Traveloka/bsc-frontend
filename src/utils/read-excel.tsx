@@ -30,10 +30,20 @@ export function extractSheetWithTrueRange(sheet: XLSX.WorkSheet) {
     return rows;
 }
 
-
 export async function readExcelFile(file: File): Promise<string[][]> {
     if (file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv")) {
-        const text = await file.text();
+        const buffer = await file.arrayBuffer();
+
+        let text = new TextDecoder("utf-8").decode(buffer);
+        if (/[�]/.test(text) || /[A-Za-z]/.test(text) && !/[ก-๙]/.test(text)) {
+            try {
+                text = new TextDecoder("windows-874").decode(buffer);
+                console.warn("🔄 Fallback: decoded as CP874 (Thai)");
+            } catch (e) {
+                console.error("⚠️ windows-874 not supported, please re-save as UTF-8");
+            }
+        }
+
         const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
         const content = lines.map((line) => {
             const result: string[] = [];
@@ -52,8 +62,10 @@ export async function readExcelFile(file: File): Promise<string[][]> {
             result.push(current.trim());
             return result;
         });
+
         return content;
     }
+
 
     const data = await file.arrayBuffer();
     let workbook: XLSX.WorkBook;
@@ -80,7 +92,7 @@ export async function readExcelFile(file: File): Promise<string[][]> {
         const sheet = workbook.Sheets[name];
         if (!sheet) continue;
 
-        const rows = extractSheetWithTrueRange(sheet); 
+        const rows = extractSheetWithTrueRange(sheet);
 
         if (rows.length > 1) {
             validSheet = rows;

@@ -6,6 +6,8 @@ import { FileData } from "@/types/file-data";
 import { convertFileInFrontend } from "@/services/convert-service";
 import { useEffect, useRef, useState } from "react";
 import { BANKS } from "@/constants/bank";
+import { parseCell } from "@/utils/parse-cell";
+import { toNumber } from "@/utils/to-number";
 
 export default function FilePreview({
     file,
@@ -84,17 +86,9 @@ export default function FilePreview({
         }
     }, [activeField]);
 
-    const parseExcelCell = (cell: string): { col: string | null; row: number | null } => {
-        if (!cell || !cell.startsWith("[")) return { col: null, row: null };
-
-        const match = cell.match(/\[([A-Z]+)(\d+)?\]/i);
-        if (!match) return { col: null, row: null };
-
-        return {
-            col: match[1].toUpperCase(),
-            row: match[2] ? Number(match[2]) : null,
-        };
-    };
+    useEffect(() => {
+        setConvertedFileResult(null)
+    }, [fieldInfo]);
 
     const columnLetterToIndex = (col: string): number => {
         let index = 0;
@@ -150,7 +144,7 @@ export default function FilePreview({
             if (displaysValue) {
                 mappedData[label] = info.value || "";
             } else if (info.col && info.row !== null) {
-                mappedData[label] = `[${info.col}${Number(info.row) + 1}]`;
+                mappedData[label] = `[${info.col}${Number(info.row)}]`;
             } else {
                 mappedData[label] = "";
             }
@@ -171,8 +165,9 @@ export default function FilePreview({
         if (activeField === null) return;
 
         const newInfo = [...fieldInfo];
-        newInfo[activeField] = { value: cellValue.trim(), row: rowIndex, col: colLabel };
+        newInfo[activeField] = { value: String(cellValue).trim(), row: rowIndex, col: colLabel };
         setFieldInfo(newInfo);
+        console.log(newInfo)
 
         if (activeField < fieldInfo.length) {
             setActiveField(activeField + 1);
@@ -181,38 +176,61 @@ export default function FilePreview({
 
     const handleBankSelect = (bank: typeof BANKS[number]) => {
         setSelectedBank(bank.code);
+
         const newInfo = [...fieldInfo];
 
-        newInfo[0].value = bank.value["Account ID *"] ? getCellValue(parseExcelCell(bank.value["Account ID *"]).col, parseExcelCell(bank.value["Account ID *"]).row, file.content) : "";
+        const safeParse = (ref?: string | number | null) => {
+            if (!ref) return { col: "", row: null };
+            const { col, row } = parseCell(String(ref));
+            return {
+                col: col !== null ? String(col) : "",
+                row: row ?? null,
+            };
+        };
 
-        newInfo[1].col = bank.value["Date [Header] *"] ? parseExcelCell(bank.value["Date [Header] *"]).col : ""
-        newInfo[1].row = bank.value["Date [Header] *"] ? parseExcelCell(bank.value["Date [Header] *"]).row : null
+        const safeGetValue = (ref?: string | number | null) => {
+            if (!ref) return "";
+            const { col, row } = parseCell(String(ref));
+            if (col == null || row == null) return "";
 
-        newInfo[2].value = bank.value["Opening balance amount *"] ? getCellValue(parseExcelCell(bank.value["Opening balance amount *"]).col, parseExcelCell(bank.value["Opening balance amount *"]).row, file.content) : "";
-        newInfo[3].value = bank.value["Account Currency *"] ? getCellValue(parseExcelCell(bank.value["Account Currency *"]).col, parseExcelCell(bank.value["Account Currency *"]).row, file.content) : "";
-        newInfo[4].value = bank.value["Statement ID *"] ? getCellValue(parseExcelCell(bank.value["Statement ID *"]).col, parseExcelCell(bank.value["Statement ID *"]).row, file.content) : "";
+            let value = getCellValue(String(col), row, file.content) ?? "";
 
-        newInfo[5].col = bank.value["Internal Bank Transaction Code"] ? parseExcelCell(bank.value["Internal Bank Transaction Code"]).col : ""
-        newInfo[5].row = bank.value["Internal Bank Transaction Code"] ? parseExcelCell(bank.value["Internal Bank Transaction Code"]).row : null
+            if (typeof value === "string") {
+                value = value.replace(/^Account\s*Number\s*[:\-]?\s*/i, "").trim();
+            }
 
-        newInfo[6].col = bank.value["Debit Amount *"] ? parseExcelCell(bank.value["Debit Amount *"]).col : ""
-        newInfo[6].row = bank.value["Debit Amount *"] ? parseExcelCell(bank.value["Debit Amount *"]).row : null
+            return value;
+        };
 
-        newInfo[7].col = bank.value["Credit Amount *"] ? parseExcelCell(bank.value["Credit Amount *"]).col : ""
-        newInfo[7].row = bank.value["Credit Amount *"] ? parseExcelCell(bank.value["Credit Amount *"]).row : null
+        const fieldMap = [
+            { key: "Account ID *", type: "value" },
+            { key: "Date [Header] *", type: "colrow" },
+            { key: "Opening balance amount *", type: "value" },
+            { key: "Account Currency *", type: "value" },
+            { key: "Statement ID *", type: "value" },
+            { key: "Internal Bank Transaction Code", type: "colrow" },
+            { key: "Debit Amount *", type: "colrow" },
+            { key: "Credit Amount *", type: "colrow" },
+            { key: "Description", type: "colrow" },
+            { key: "Reference", type: "colrow" },
+            { key: "Transaction Original Amount", type: "colrow" },
+            { key: "Transaction Original Amount Currency", type: "colrow" },
+        ] as const;
 
-        newInfo[8].col = bank.value["Description"] ? parseExcelCell(bank.value["Description"]).col : ""
-        newInfo[8].row = bank.value["Description"] ? parseExcelCell(bank.value["Description"]).row : null
+        fieldMap.forEach((f, i) => {
+            const ref = bank.value[f.key];
+            if (f.type === "value") {
+                if (ref.startsWith("[") && ref.endsWith("]")) newInfo[i].value = safeGetValue(ref);
+                else newInfo[i].value = ref;
+            } else {
+                const { col, row } = safeParse(ref);
+                newInfo[i].col = col;
+                newInfo[i].row = row;
+            }
+        });
 
-        newInfo[9].col = bank.value["Reference"] ? parseExcelCell(bank.value["Reference"]).col : ""
-        newInfo[9].row = bank.value["Reference"] ? parseExcelCell(bank.value["Reference"]).row : null
 
-        newInfo[10].col = bank.value["Transaction Original Amount"] ? parseExcelCell(bank.value["Transaction Original Amount"]).col : ""
-        newInfo[10].row = bank.value["Transaction Original Amount"] ? parseExcelCell(bank.value["Transaction Original Amount"]).row : null
-
-        newInfo[11].col = bank.value["Transaction Original Amount Currency"] ? parseExcelCell(bank.value["Transaction Original Amount Currency"]).col : ""
-        newInfo[11].row = bank.value["Transaction Original Amount Currency"] ? parseExcelCell(bank.value["Transaction Original Amount Currency"]).row : null
-
+        console.log(newInfo)
         setIsTransactionOpen(true);
         setFieldInfo(newInfo);
     };
@@ -262,7 +280,7 @@ export default function FilePreview({
                                         <input
                                             type="text"
                                             data-field-index={index}
-                                            value={(title == "Transactions" || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + (fieldInfo[index].row !== null ? (Number(fieldInfo[index].row) + 1) : "") + "]") : fieldInfo[index].value}
+                                            value={(title == "Transactions" || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + (fieldInfo[index].row !== null ? (Number(fieldInfo[index].row)) : "") + "]") : fieldInfo[index].value}
                                             readOnly={title == "Transactions" || label.toLowerCase().includes("date")}
                                             onChange={(e) => {
                                                 const newInfo = [...fieldInfo];
@@ -287,7 +305,7 @@ export default function FilePreview({
                                             {(i == 2 && title != "Transactions" &&
                                                 fieldInfo[index].value !== "" &&
                                                 fieldInfo[index].value !== null
-                                                ? Number(fieldInfo[index].value) < 0
+                                                ? toNumber(fieldInfo[index].value) < 0
                                                     ? "(D)"
                                                     : "(C)"
                                                 : "")}
@@ -344,7 +362,7 @@ export default function FilePreview({
 
             <div className="bg-transparent rounded-2xl shadow-md border border-gray-200 p-6 overflow-x-auto">
                 <div className="flex items-center justify-start gap-4 w-max">
-                    {BANKS.map((bank) => {
+                    {BANKS.sort((a, b) => a.code.localeCompare(b.code)).map((bank) => {
                         const isSelected = selectedBank === bank.code;
                         return (
                             <div
@@ -406,10 +424,10 @@ export default function FilePreview({
             />
 
             <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-                {convertedFileResult ? (
-                    <div className="text-center">
-                        <div>
-
+                {!loading && convertedFileResult ? (
+                    <div className="text-center relative">
+                        <div className="absolute top-1 right-1" title="Convert Again" onClick={handleConvert}>
+                            <RefreshCw className="group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2 text-gray-300 hover:text-gray-500 cursor-pointer" />
                         </div>
                         <h3 className="text-lg font-semibold text-black mb-2">
                             Conversion Complete 🎉

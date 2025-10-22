@@ -12,6 +12,25 @@ export const safeParseDate = (value: any): Date | null => {
     const str = String(value).trim();
     if (!str) return null;
 
+    const dateTime = str.match(
+        /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$|^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/
+    );
+    if (dateTime) {
+        // DMY format first half of regex
+        if (dateTime[1]) {
+            let [, d, m, y, hh, mm, ss] = dateTime;
+            if (y.length === 2) y = `20${y}`;
+            const date = new Date(Date.UTC(+y, +m - 1, +d, +hh || 0, +mm || 0, +ss || 0));
+            return isNaN(date.getTime()) ? null : date;
+        }
+        // YMD format second half of regex
+        if (dateTime[7]) {
+            const [, , , , , , , y, m, d, hh, mm, ss] = dateTime;
+            const date = new Date(Date.UTC(+y, +m - 1, +d, +hh || 0, +mm || 0, +ss || 0));
+            return isNaN(date.getTime()) ? null : date;
+        }
+    }
+
     const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
     if (dmy) {
         let [_, d, m, y] = dmy;

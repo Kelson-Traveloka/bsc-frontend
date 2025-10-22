@@ -57,7 +57,7 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel }:
                                     key={cellIndex}
                                     onClick={() =>
                                         onCellClick &&
-                                        onCellClick(rowIndex, getColumnLabel(cellIndex), cell)
+                                        onCellClick(rowIndex + 1, getColumnLabel(cellIndex), cell)
                                     }
                                     className="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-r border-gray-200 hover:bg-gray-200/60 active:bg-gray-300 transition-colors cursor-pointer select-none"
                                 >
