@@ -100,25 +100,7 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-
-    {
-        code: "VCB",
-        name: "Vietcombank",
-        value: {
-            "Account ID *": "[B4]",
-            "Date [Header] *": "[A11]",
-            "Opening balance amount *": "[D10]",
-            "Account Currency *": "[B7]",
-            "Statement ID *": "[B4]",
-            "Internal Bank Transaction Code": "",
-            "Debit Amount *": "[C11]",
-            "Credit Amount *": "[D11]",
-            "Description": "[E11]",
-            "Reference": "[B11]",
-            "Transaction Original Amount": "",
-            "Transaction Original Amount Currency": "",
-        },
-    },
+    // SCB
     {
         code: "SCB",
         name: "Siam Commercial Bank",
@@ -137,9 +119,7 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-
-
-
+    // SIC
     {
         code: "SIC",
         name: "Siam Commercial Bank (SCB)",
@@ -158,6 +138,26 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
+    // VCB
+    {
+        code: "VCB",
+        name: "Vietcombank",
+        value: {
+            "Account ID *": "[B4]",
+            "Date [Header] *": "[A11]",
+            "Opening balance amount *": "[D10]",
+            "Account Currency *": "[B7]",
+            "Statement ID *": "[B4]",
+            "Internal Bank Transaction Code": "",
+            "Debit Amount *": "[C11]",
+            "Credit Amount *": "[D11]",
+            "Description": "[E11]",
+            "Reference": "[B11]",
+            "Transaction Original Amount": "",
+            "Transaction Original Amount Currency": "",
+        },
+    },
+    // VTB 
     {
         code: "VTB",
         name: "VietinBank",

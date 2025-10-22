@@ -119,7 +119,7 @@ export default function FilePreview({
 
         const emptyIndexes = allLabels
             .map((label, i) => ({ label, i }))
-            .filter(({ label, i }) => label.includes("*") && ((!fieldInfo[i].value || fieldInfo[i].value.trim() === "") && (fieldInfo[i].col?.trim() === "" || !fieldInfo[i].col)))
+            .filter(({ label, i }) => label.includes("*") && ((!fieldInfo[i].value || String(fieldInfo[i].value).trim() === "") && (String(fieldInfo[i].col)?.trim() === "" || !fieldInfo[i].col)))
             .map(({ i }) => i);
 
         if (emptyIndexes.length > 0) {
