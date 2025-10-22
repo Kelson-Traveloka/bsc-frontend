@@ -4,91 +4,17 @@ import React, { useState, useCallback } from "react";
 import UploadArea from "@/components/upload-area";
 import FilePreview from "@/components/file-review";
 import { FileData } from "@/types/file-data";
+import { readExcelFile } from "@/utils/read-excel";
 
 export default function Home() {
   const [uploadedFile, setUploadedFile] = useState<FileData | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleFileRead = (file: File) => {
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      let content: string[][] = [];
- 
-      if (file.type === "text/csv" || file.name.endsWith(".csv")) {
-        const text = e.target?.result as string;
-        const lines = text.split("\n");
-        content = lines
-          .map((line) => {
-            const result: string[] = [];
-            let current = "";
-            let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-              const char = line[i];
-              if (char === '"') inQuotes = !inQuotes;
-              else if (char === "," && !inQuotes) {
-                result.push(current.trim());
-                current = "";
-              } else {
-                current += char;
-              }
-            }
-            result.push(current.trim());
-            return result;
-          })
-          .filter((row) => row.some((cell) => cell.length > 0));
-
-        // ✅ XLS / XLSX HANDLING
-      } else if (file.name.endsWith(".xls")) {
-        const binary = e.target?.result as string;
-        const workbook = XLSX.read(binary, {
-          type: "binary",
-          cellDates: true,
-          cellNF: false,
-          cellText: false,
-          raw: true,
-        });
-
-        for (const name of workbook.SheetNames) {
-          const sheet = workbook.Sheets[name];
-
-          // Try first with sheet_to_json
-          let rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true }) as string[][];
-
-          // If still empty, fallback to CSV parsing
-          if (!rows || rows.length === 0) {
-            const csv = XLSX.utils.sheet_to_csv(sheet);
-            rows = csv.split("\n").map(r => r.split(","));
-            console.warn("⚠️ sheet_to_json empty, fallback to CSV mode");
-          }
-
-          // Filter out completely empty rows
-          // rows = rows.filter(r => r.some(c => String(c || "").trim() !== ""));
-
-          if (rows.length > 0) {
-            content = rows;
-            break;
-          }
-        }
-
-        if (content.length === 0) {
-          console.warn("⚠️ Still empty after fallback — possible merged cells or special encoding");
-        }
-      } else {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-
-        for (const name of workbook.SheetNames) {
-          const sheet = workbook.Sheets[name];
-          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false }) as string[][];
-          if (rows && rows.length > 0) {
-            content = rows;
-            break;
-          }
-        }
-      }
-
+  const handleFileRead = async (file: File) => {
+    setIsLoading(true);
+    try {
+      const content = await readExcelFile(file);
       setUploadedFile({
         file,
         name: file.name,
@@ -97,15 +23,11 @@ export default function Home() {
         lastModified: file.lastModified,
         content,
       });
+    } catch (err) {
+      console.error("❌ Error reading file:", err);
+      alert("Failed to read this file. Please check your format or try again.");
+    } finally {
       setIsLoading(false);
-    };
-
-    if (file.name.endsWith(".xls")) {
-      reader.readAsBinaryString(file);
-    } else if (file.type === "text/csv" || file.name.endsWith(".csv")) {
-      reader.readAsText(file);
-    } else {
-      reader.readAsArrayBuffer(file);
     }
   };
 

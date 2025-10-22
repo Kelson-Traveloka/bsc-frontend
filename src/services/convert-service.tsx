@@ -39,6 +39,7 @@ export async function convertFileInFrontend(
   if (headerRow == null) throw new Error("Invalid mapping: missing Date [Header] *");
 
   const headerValues = df[headerRow - 1];
+  console.log(headerValues)
   df = df.slice(headerRow);
 
   const rows: ExcelRow[] = df.map((row) => {
@@ -158,12 +159,4 @@ export async function convertFileInFrontend(
       invalidTransactions: invalidTransactions
     }
   };
-  // const a = document.createElement("a");
-  // a.href = url;
-  // a.download = file.name.replace(/\.\w+$/, "_converted.txt");
-  // a.style.display = "none";
-  // document.body.appendChild(a);
-  // a.click();
-  // document.body.removeChild(a);
-  // URL.revokeObjectURL(url);
 }
