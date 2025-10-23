@@ -122,8 +122,6 @@ export async function convertFileInFrontend(
     const totalDebit = group.reduce((s, r) => s + (r["Debit Amount *"] || 0), 0);
     const totalCredit = group.reduce((s, r) => s + (r["Credit Amount *"] || 0), 0);
     const closingBalance = openingBalance + totalCredit - totalDebit;
-    console.log(totalCredit)
-    console.log(totalDebit)
     const openingDir = openingBalance < 0 ? "D" : "C";
     const closingDir = closingBalance < 0 ? "D" : "C";
     const openingStr = fmtAmount(Math.abs(openingBalance));

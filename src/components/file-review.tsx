@@ -7,7 +7,7 @@ import { convertFileInFrontend } from "@/services/convert-service";
 import { useEffect, useRef, useState } from "react";
 import { BANKS } from "@/constants/bank";
 import { parseCell } from "@/utils/parse-cell";
-import { toNumber } from "@/utils/to-number";
+import { toFixedCurrencyNumber, toNumber } from "@/utils/to-number";
 
 export default function FilePreview({
     file,
@@ -280,13 +280,19 @@ export default function FilePreview({
                                         <input
                                             type="text"
                                             data-field-index={index}
-                                            value={(title == "Transactions" || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + (fieldInfo[index].row !== null ? (Number(fieldInfo[index].row)) : "") + "]") : fieldInfo[index].value}
+                                            value={(title == "Transactions" || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + (fieldInfo[index].row !== null ? (Number(fieldInfo[index].row)) : "") + "]") : label === "Opening balance amount *"
+                                                ? toFixedCurrencyNumber(fieldInfo[index].value)
+                                                : fieldInfo[index].value}
                                             readOnly={title == "Transactions" || label.toLowerCase().includes("date")}
                                             onChange={(e) => {
                                                 const newInfo = [...fieldInfo];
+                                                let val = e.target.value;
+                                                if (label.trim() === "Opening balance amount *") {
+                                                    val = val.replace(/,/g, "");
+                                                }
                                                 newInfo[index] = {
                                                     ...newInfo[index],
-                                                    value: e.target.value,
+                                                    value: val,
                                                 };
                                                 setFieldInfo(newInfo);
                                             }}
