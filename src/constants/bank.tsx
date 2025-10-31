@@ -107,7 +107,7 @@ export const BANKS: {
         value: {
             "Account ID *": "[A2]",
             "Date [Header] *": "[B1]",
-            "Opening balance amount *": "",
+            "Opening balance amount *": "calc([J2]+[G2]-[H2])",
             "Account Currency *": "THB",
             "Statement ID *": "[A2]",
             "Internal Bank Transaction Code": "",
@@ -126,8 +126,8 @@ export const BANKS: {
         value: {
             "Account ID *": "[A2]",
             "Date [Header] *": "[B1]",
-            "Opening balance amount *": "",
-            "Account Currency *": "",
+            "Opening balance amount *": "calc([J2]+[G2]-[H2])", 
+            "Account Currency *": "THB",
             "Statement ID *": "[A2]",
             "Internal Bank Transaction Code": "",
             "Debit Amount *": "[G1]",

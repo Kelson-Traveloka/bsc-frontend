@@ -220,7 +220,22 @@ export default function FilePreview({
         fieldMap.forEach((f, i) => {
             const ref = bank.value[f.key];
             if (f.type === "value") {
-                if (ref.startsWith("[") && ref.endsWith("]")) newInfo[i].value = safeGetValue(ref);
+                if (ref.startsWith("calc(") && ref.endsWith(")")) {
+                    const formula = ref.slice(5, -1);
+                    const matches = formula.match(/\[[A-Z]+\d+\]/gi) || [];
+                    let expr = formula;
+                    matches.forEach((cellRef) => {
+                        const value = Number(toNumber(safeGetValue(cellRef)))
+                        expr = expr.replace(cellRef, value.toString());
+                    });
+                    try {
+                        const result = eval(expr);
+                        newInfo[i].value = result.toString();
+                    } catch (e) {
+                        newInfo[i].value = "";
+                    }
+                }
+                else if (ref.startsWith("[") && ref.endsWith("]")) newInfo[i].value = safeGetValue(ref);
                 else newInfo[i].value = ref;
             } else {
                 const { col, row } = safeParse(ref);
@@ -228,9 +243,7 @@ export default function FilePreview({
                 newInfo[i].row = row;
             }
         });
-
-
-        console.log(newInfo)
+ 
         setIsTransactionOpen(true);
         setFieldInfo(newInfo);
     };
