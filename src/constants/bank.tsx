@@ -5,14 +5,14 @@ export const BANKS: {
     name: string;
     value: Record<string, string>;
 }[] = [
-    // BAY
+    // BAY (Account ID, Account Currency, Statement ID)
     {
         code: "BAY",
         name: "Bank of Ayudhya",
         value: {
             "Account ID *": "",
             "Date [Header] *": "[A1]",
-            "Opening balance amount *": "",
+            "Opening balance amount *": "calc([G2]+[E2]-[F2])",
             "Account Currency *": "",
             "Statement ID *": "",
             "Internal Bank Transaction Code": "",
@@ -24,7 +24,7 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-    // BBL
+    // BBL (Complete, Note: Is it expected for the header and the first data has a 1 row empty inbetween)
     {
         code: "BBL",
         name: "Bangkok Bank",
@@ -43,7 +43,7 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-    // CTI
+    // CTI (Opening Balance)
     {
         code: "CTI",
         name: "Citibank",
@@ -62,14 +62,14 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-    // KBANK
+    // KBANK (Account ID, Statemnt ID)
     {
         code: "KBANK",
         name: "Kasikornbank",
         value: {
             "Account ID *": "",
             "Date [Header] *": "[A1]",
-            "Opening balance amount *": "",
+            "Opening balance amount *": "calc([G2]+[E2]-[F2])",
             "Account Currency *": "[I2]",
             "Statement ID *": "",
             "Internal Bank Transaction Code": "",
@@ -81,14 +81,7 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-//     Hi @all
-
-// i want to inform that the template shortcut for SCB and SIC have been update (Calculate opening balance). and for quick update: for the complete mandatory field template will be the BBL, SCB, SIC, VCB, and VTB.
-
-// KBANK, BAY, CTI
-// KTB -> Ada Ledger Balance, Ada Available Balance, Ada juga amount + currenct balance
-
-    // KTB
+    // KTB (Opening Balance: 3 Options (Ledger Balance, Available Balance, (First Day Balance - First Day Amount)))
     {
         code: "KTB",
         name: "Krung Thai Bank",
@@ -107,7 +100,7 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-    // SCB
+    // SCB (Complete)
     {
         code: "SCB",
         name: "Siam Commercial Bank",
@@ -126,7 +119,7 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-    // SIC
+    // SIC (Complete)
     {
         code: "SIC",
         name: "Siam Commercial Bank (SCB)",
@@ -145,7 +138,7 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-    // VCB
+    // VCB (Complete)
     {
         code: "VCB",
         name: "Vietcombank",
@@ -164,7 +157,7 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-    // VTB 
+    // VTB (Complete)
     {
         code: "VTB",
         name: "VietinBank",
