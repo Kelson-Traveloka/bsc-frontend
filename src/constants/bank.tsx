@@ -31,7 +31,7 @@ export const BANKS: {
         value: {
             "Account ID *": "[G3]",
             "Date [Header] *": "[A5]",
-            "Opening balance amount *": "",
+            "Opening balance amount *": "calc([Q7]+[L7]-[N7])",
             "Account Currency *": "THB",
             "Statement ID *": "[G3]",
             "Internal Bank Transaction Code": "",
@@ -83,10 +83,9 @@ export const BANKS: {
     },
 //     Hi @all
 
-// i want to inform that the template shortcut for SCB and SIC have been update (Calculate opening balance). and for quick update: for the complete mandatory field template will be the SCB, SIC, VCB, and VTB.
-// CTI, BBL
+// i want to inform that the template shortcut for SCB and SIC have been update (Calculate opening balance). and for quick update: for the complete mandatory field template will be the BBL, SCB, SIC, VCB, and VTB.
 
-// KBANK, BAY
+// KBANK, BAY, CTI
 // KTB -> Ada Ledger Balance, Ada Available Balance, Ada juga amount + currenct balance
 
     // KTB
