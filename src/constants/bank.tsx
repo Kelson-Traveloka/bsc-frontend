@@ -81,6 +81,14 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
+//     Hi @all
+
+// i want to inform that the template shortcut for SCB and SIC have been update (Calculate opening balance). and for quick update: for the complete mandatory field template will be the SCB, SIC, VCB, and VTB.
+// CTI, BBL
+
+// KBANK, BAY
+// KTB -> Ada Ledger Balance, Ada Available Balance, Ada juga amount + currenct balance
+
     // KTB
     {
         code: "KTB",

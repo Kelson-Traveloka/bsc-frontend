@@ -7,9 +7,10 @@ export const toNumber = (value: any): number => {
 
 export const toFixedCurrencyNumber = (value: string | number): string => {
     if (value === "" || value === null) return "";
+    if (value === "-") return "-";
 
 
-    const str = String(value).replace(/,/g, ""); 
+    const str = String(value).replace(/,/g, "");
     if (str.endsWith(".")) {
         const [intPart] = str.split(".");
         const formattedInt = Number(intPart).toLocaleString("en-US", {
@@ -17,7 +18,7 @@ export const toFixedCurrencyNumber = (value: string | number): string => {
             maximumFractionDigits: 3,
         });
         return formattedInt + ".";
-    } 
+    }
 
     if (isNaN(Number(str))) return "";
 
