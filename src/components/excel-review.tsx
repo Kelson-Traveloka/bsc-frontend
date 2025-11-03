@@ -55,7 +55,7 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel, v
                     )
                         .slice(0, 200).map((row, rowIndex) => (
                             <tr key={rowIndex}>
-                                <td className={`${(viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0) ? "bg-red-600/10 text-red-700" : "bg-gray-600/10 text-gray-700"} px-2 py-2 font-bold text-sm text-center backdrop-blur-sm border-r border-gray-200 w-12 sticky left-0 z-10`}>
+                                <td className={`bg-gray-600/10 text-gray-700 px-2 py-2 font-bold text-sm text-center backdrop-blur-sm border-r border-gray-200 w-12 sticky left-0 z-10`}>
                                     {(viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0) ? invalidTransactions[rowIndex] : rowIndex + 1}
                                 </td>
                                 {row.map((cell, cellIndex) => (
@@ -65,7 +65,7 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel, v
                                             onCellClick &&
                                             onCellClick(rowIndex + 1, getColumnLabel(cellIndex), cell)
                                         }
-                                        className={`${(viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0) ? "bg-red-500/20 text-red-500" : "text-gray-800"} px-4 py-2 whitespace-nowrap text-sm border-r border-gray-200 hover:bg-gray-200/60 active:bg-gray-300 transition-colors cursor-pointer select-none`}
+                                        className={`text-gray-800 px-4 py-2 whitespace-nowrap text-sm border-r border-gray-200 hover:bg-gray-200/60 active:bg-gray-300 transition-colors cursor-pointer select-none`}
                                     >
                                         {cell}
                                     </td>
