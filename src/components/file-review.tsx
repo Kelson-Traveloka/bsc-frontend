@@ -81,6 +81,18 @@ export default function FilePreview({
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        if (!file?.name) return;
+
+        const fileBankCode = file.name.slice(0, 3).toUpperCase();
+        const matchedBank = BANKS.find((bank) => bank.code.toUpperCase() === fileBankCode);
+        if (matchedBank) {
+            handleBankSelect(matchedBank);
+        } else {
+            setSelectedBank(null);
+        }
+    }, [file]);
+
+    useEffect(() => {
         if (activeField !== null && activeField >= headerLabels.length) {
             setIsTransactionOpen(true);
         }
@@ -243,7 +255,7 @@ export default function FilePreview({
                 newInfo[i].row = row;
             }
         });
- 
+
         setIsTransactionOpen(true);
         setFieldInfo(newInfo);
     };
