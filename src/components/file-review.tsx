@@ -1,13 +1,15 @@
 "use client";
-import { CheckCircle, ChevronDown, ChevronRight, Download, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, RefreshCw } from "lucide-react";
 import ExcelTablePreview from "./excel-review";
-import { formatFileSize } from "@/utils/file-helper";
 import { FileData } from "@/types/file-data";
 import { convertFileInFrontend } from "@/services/convert-service";
 import { useEffect, useRef, useState } from "react";
 import { BANKS } from "@/constants/bank";
 import { parseCell } from "@/utils/parse-cell";
 import { toFixedCurrencyNumber, toNumber } from "@/utils/to-number";
+import FileHeader from "./file-preview/file-header";
+import { getCellValue } from "@/utils/cell-value";
+import BankTemplateList from "./file-preview/bank-template-list";
 
 export default function FilePreview({
     file,
@@ -34,10 +36,6 @@ export default function FilePreview({
         "Transaction Original Amount Currency",
     ];
 
-    const [convertedFileResult, setConvertedFileResult] = useState<{ url: string, summary: { totalRows: number, validTransactions: number, invalidTransactions: number } } | null>(null);
-    const [selectedBank, setSelectedBank] = useState<string | null>(null);
-    const [isTransactionOpen, setIsTransactionOpen] = useState(false);
-    const [invalidFields, setInvalidFields] = useState<number[]>([]);
     const [fieldInfo, setFieldInfo] = useState<
         { value: string; col: string | null; row: number | null }[]
     >(
@@ -46,6 +44,12 @@ export default function FilePreview({
             () => ({ value: "", col: "", row: null })
         )
     );
+
+    const fmt = (field: { value: string, col: string | null, row: number | null }) => {
+        if (!field?.col || field.col === "" || field.row == null)
+            return ";";
+        return `[${field.col}${Number(field.row) + 1}];`;
+    };
 
     const previewHeader =
         "1;" +
@@ -59,12 +63,6 @@ export default function FilePreview({
         fieldInfo[3].value + ";" + // Account Currency 
         fieldInfo[4].value + ";"; // Statement ID
 
-    const fmt = (field: { value: string, col: string | null, row: number | null }) => {
-        if (!field?.col || field.col === "" || field.row == null)
-            return ";";
-        return `[${field.col}${Number(field.row) + 1}];`;
-    };
-
     const previewTransaction =
         "2;NTRF;" +
         fmt(fieldInfo[5]) + // Internal Bank Transaction Code
@@ -77,6 +75,10 @@ export default function FilePreview({
         fmt(fieldInfo[10]) + // Transaction Original Amount
         fmt(fieldInfo[11]);  // Transaction Original Amount Currency
 
+    const [convertedFileResult, setConvertedFileResult] = useState<{ url: string, summary: { totalRows: number, validTransactions: number, invalidTransactions: number } } | null>(null);
+    const [selectedBank, setSelectedBank] = useState<string | null>(null);
+    const [isTransactionOpen, setIsTransactionOpen] = useState(false);
+    const [invalidFields, setInvalidFields] = useState<number[]>([]);
     const [activeField, setActiveField] = useState<number | null>(0);
     const [loading, setLoading] = useState(false);
 
@@ -101,27 +103,6 @@ export default function FilePreview({
     useEffect(() => {
         setConvertedFileResult(null)
     }, [fieldInfo]);
-
-    const columnLetterToIndex = (col: string): number => {
-        let index = 0;
-        for (let i = 0; i < col.length; i++) {
-            index = index * 26 + (col.charCodeAt(i) - "A".charCodeAt(0) + 1);
-        }
-        return index - 1;
-    };
-
-    const getCellValue = (
-        col: string | null,
-        row: number | null,
-        content: string[][]
-    ): string => {
-        if (!col || row === null) return "";
-        const colIndex = columnLetterToIndex(col);
-        const rowIndex = row - 1;
-        if (rowIndex < 0 || rowIndex >= content.length) return "";
-        if (colIndex < 0 || colIndex >= content[rowIndex].length) return "";
-        return content[rowIndex][colIndex] ?? "";
-    };
 
     const handleConvert = async () => {
         if (!file.file) return alert("No file available for conversion");
@@ -179,7 +160,6 @@ export default function FilePreview({
         const newInfo = [...fieldInfo];
         newInfo[activeField] = { value: String(cellValue).trim(), row: rowIndex, col: colLabel };
         setFieldInfo(newInfo);
-        console.log(newInfo)
 
         if (activeField < fieldInfo.length) {
             setActiveField(activeField + 1);
@@ -368,55 +348,8 @@ export default function FilePreview({
 
     return (
         <div className="space-y-6">
-            <div className="bg-transparent rounded-2xl shadow-md border border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-green-100 animate-pulse rounded-full flex items-center justify-center">
-                            <CheckCircle className="w-6 h-6 text-green-400" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-semibold text-black">{file.name}</h3>
-                            <p className="text-sm text-gray-600">
-                                {formatFileSize(file.size)} •{" "}
-                                {new Date(file.lastModified).toLocaleDateString()}
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={onReset}
-                        className="px-4 py-2 text-gray-500 hover:text-black hover:bg-gray-300/30 rounded-lg transition-colors"
-                    >
-                        Upload Different File
-                    </button>
-                </div>
-            </div>
-
-            <div className="bg-transparent rounded-2xl shadow-md border border-gray-200 p-6 overflow-x-auto">
-                <div className="flex items-center justify-start gap-4 w-max">
-                    {BANKS.sort((a, b) => a.code.localeCompare(b.code)).map((bank) => {
-                        const isSelected = selectedBank === bank.code;
-                        return (
-                            <div
-                                key={bank.code}
-                                onClick={() => handleBankSelect(bank)}
-                                className={`cursor-pointer border rounded-md w-48 flex-shrink-0 p-3 px-5 flex flex-col justify-center items-start transition-all duration-200
-                        ${isSelected
-                                        ? "bg-gray-100 border-gray-400 shadow-md"
-                                        : "hover:bg-zinc-200/50 hover:shadow-sm border-gray-300"
-                                    }`}
-                            >
-                                <span className="font-semibold">{bank.code}</span>
-                                <span
-                                    className="text-gray-600 text-sm text-nowrap truncate w-full"
-                                    title={bank.name}
-                                >
-                                    {bank.name}
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
+            <FileHeader file={file} onReset={onReset} />
+            <BankTemplateList handleBankSelect={handleBankSelect} selectedBank={selectedBank} />
 
             <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6 flex flex-col justify-center items-center gap-4">
                 {renderFieldInputs(headerLabels, 0, "Header")}

@@ -47,7 +47,7 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel }:
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-300">
-                    {normalizedContent.map((row, rowIndex) => (
+                    {normalizedContent.slice(0, 200).map((row, rowIndex) => (
                         <tr key={rowIndex}>
                             <td className="px-2 py-2 font-bold text-sm text-gray-700 text-center bg-gray-600/10 backdrop-blur-sm border-r border-gray-200 w-12 sticky left-0 z-10">
                                 {rowIndex + 1}
@@ -68,6 +68,11 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel }:
                     ))}
                 </tbody>
             </table>
+            {content.length > 200 && (
+                <div className="px-6 py-2 border-t bg-gray-600/10 text-sm text-gray-600 text-center">
+                    Showing first 200 rows of {content.length} total rows
+                </div>
+            )}
             <FollowTooltip text={activeLabel} visible={isHovering && !!activeLabel} />
         </div>
     );

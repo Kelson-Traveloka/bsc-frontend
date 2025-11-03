@@ -1,5 +1,5 @@
 "use client";
-import { Upload, FileSpreadsheet } from "lucide-react";
+import { Upload } from "lucide-react";
 
 export default function UploadArea({
     isDragging,
