@@ -6,9 +6,11 @@ interface ExcelTablePreviewProps {
     content: string[][];
     onCellClick?: (rowIndex: number, colLabel: string, cellValue: string) => void;
     activeLabel: string;
+    viewExcelType: "All" | "Invalid";
+    invalidTransactions: number[] | null
 }
 
-export default function ExcelTablePreview({ content, onCellClick, activeLabel }: ExcelTablePreviewProps) {
+export default function ExcelTablePreview({ content, onCellClick, activeLabel, viewExcelType, invalidTransactions }: ExcelTablePreviewProps) {
     const [isHovering, setIsHovering] = useState(false);
 
     const maxCols = Math.max(...content.map(row => row.length));
@@ -47,28 +49,32 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel }:
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-300">
-                    {normalizedContent.slice(0, 200).map((row, rowIndex) => (
-                        <tr key={rowIndex}>
-                            <td className="px-2 py-2 font-bold text-sm text-gray-700 text-center bg-gray-600/10 backdrop-blur-sm border-r border-gray-200 w-12 sticky left-0 z-10">
-                                {rowIndex + 1}
-                            </td>
-                            {row.map((cell, cellIndex) => (
-                                <td
-                                    key={cellIndex}
-                                    onClick={() =>
-                                        onCellClick &&
-                                        onCellClick(rowIndex + 1, getColumnLabel(cellIndex), cell)
-                                    }
-                                    className="px-4 py-2 whitespace-nowrap text-sm text-gray-800 border-r border-gray-200 hover:bg-gray-200/60 active:bg-gray-300 transition-colors cursor-pointer select-none"
-                                >
-                                    {cell}
+                    {(viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0
+                        ? normalizedContent.filter((_, rowIndex) => invalidTransactions?.includes(rowIndex + 1))
+                        : normalizedContent
+                    )
+                        .slice(0, 200).map((row, rowIndex) => (
+                            <tr key={rowIndex}>
+                                <td className={`${(viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0) ? "bg-red-600/10 text-red-700" : "bg-gray-600/10 text-gray-700"} px-2 py-2 font-bold text-sm text-center backdrop-blur-sm border-r border-gray-200 w-12 sticky left-0 z-10`}>
+                                    {(viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0) ? invalidTransactions[rowIndex] : rowIndex + 1}
                                 </td>
-                            ))}
-                        </tr>
-                    ))}
+                                {row.map((cell, cellIndex) => (
+                                    <td
+                                        key={cellIndex}
+                                        onClick={() =>
+                                            onCellClick &&
+                                            onCellClick(rowIndex + 1, getColumnLabel(cellIndex), cell)
+                                        }
+                                        className={`${(viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0) ? "bg-red-500/20 text-red-500" : "text-gray-800"} px-4 py-2 whitespace-nowrap text-sm border-r border-gray-200 hover:bg-gray-200/60 active:bg-gray-300 transition-colors cursor-pointer select-none`}
+                                    >
+                                        {cell}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
                 </tbody>
             </table>
-            {content.length > 200 && (
+            {content.length > 200 && !(viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0) && (
                 <div className="px-6 py-2 border-t bg-gray-600/10 text-sm text-gray-600 text-center">
                     Showing first 200 rows of {content.length} total rows
                 </div>

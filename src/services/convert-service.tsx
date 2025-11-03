@@ -3,7 +3,6 @@ import { parseCell } from "@/utils/parse-cell";
 import { safeParseDate } from "@/utils/parse-date";
 import { readExcelFile } from "@/utils/read-excel";
 import { toNumber } from "@/utils/to-number";
-import * as XLSX from "xlsx";
 
 export type MappingField = Record<string, string>;
 export type ExcelRow = Record<string, string | number | Date | null | undefined>;
@@ -24,7 +23,7 @@ export async function convertFileInFrontend(
   summary: {
     totalRows: number;
     validTransactions: number;
-    invalidTransactions: number;
+    invalidTransactions: number[];
   };
 }> {
   const df = await readExcelFile(file);
@@ -64,12 +63,14 @@ export async function convertFileInFrontend(
   const sameColDebitCredit = (mapping["Debit Amount *"] == mapping["Credit Amount *"]);
   let totalRows = renamed.length;
   let validTransactions = 0;
-  let invalidTransactions = 0;
+  let invalidTransactions = [];
+  const invalidTransactionRows: { index: number; }[] = [];
 
-  for (const r of renamed) {
+
+  for (const [index, r] of renamed.entries()) {
     const parsed = safeParseDate(r["Date [Header] *"]);
     if (!parsed) {
-      invalidTransactions++;
+      invalidTransactions.push(index + headerRow + 1);
       continue;
     }
     r["Transaction Date"] = parsed;

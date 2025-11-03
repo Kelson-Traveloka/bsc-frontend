@@ -1,5 +1,5 @@
 "use client";
-import { ChevronDown, ChevronRight, Download, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, List, RefreshCw, TriangleAlert } from "lucide-react";
 import ExcelTablePreview from "./excel-review";
 import { FileData } from "@/types/file-data";
 import { convertFileInFrontend } from "@/services/convert-service";
@@ -75,12 +75,13 @@ export default function FilePreview({
         fmt(fieldInfo[10]) + // Transaction Original Amount
         fmt(fieldInfo[11]);  // Transaction Original Amount Currency
 
-    const [convertedFileResult, setConvertedFileResult] = useState<{ url: string, summary: { totalRows: number, validTransactions: number, invalidTransactions: number } } | null>(null);
+    const [convertedFileResult, setConvertedFileResult] = useState<{ url: string, summary: { totalRows: number, validTransactions: number, invalidTransactions: number[] } } | null>(null);
     const [selectedBank, setSelectedBank] = useState<string | null>(null);
     const [isTransactionOpen, setIsTransactionOpen] = useState(false);
     const [invalidFields, setInvalidFields] = useState<number[]>([]);
     const [activeField, setActiveField] = useState<number | null>(0);
     const [loading, setLoading] = useState(false);
+    const [viewExcelType, setViewExcelType] = useState<"All" | "Invalid">("All")
 
     useEffect(() => {
         if (!file?.name) return;
@@ -144,8 +145,8 @@ export default function FilePreview({
         });
 
         try {
-            console.log(mappedData)
             const result = await convertFileInFrontend(file.file, mappedData);
+            console.log(result)
             setConvertedFileResult(result);
         } catch (err) {
             console.error(err);
@@ -383,16 +384,29 @@ export default function FilePreview({
                 </div>
             </div>
 
-            <ExcelTablePreview content={file.content} onCellClick={handleCellClick}
+            <ExcelTablePreview content={file.content} onCellClick={handleCellClick} viewExcelType={viewExcelType} invalidTransactions={convertedFileResult?.summary.invalidTransactions ?? null}
                 activeLabel={activeField !== null ? (activeField < headerLabels.length ? headerLabels[activeField] : transactionLabels[activeField - headerLabels.length]) : ""}
             />
 
             <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
                 {!loading && convertedFileResult ? (
                     <div className="text-center relative">
-                        <div className="absolute top-1 right-1" title="Convert Again" onClick={handleConvert}>
-                            <RefreshCw className="group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2 text-gray-300 hover:text-gray-500 cursor-pointer" />
+                        <div className="absolute top-1 right-1 flex flex-col justify-center items-center gap-5" title="Convert Again" onClick={handleConvert}>
+                            <RefreshCw className="group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2 text-blue-300 hover:text-blue-500 cursor-pointer" />
                         </div>
+                        {viewExcelType === "All" ? (
+                            <div className="absolute top-10 right-1 flex flex-col justify-center items-center gap-5" title="Show Invalid Transactions" onClick={() => {
+                                if (convertedFileResult.summary.invalidTransactions.length > 0) {
+                                    setViewExcelType("Invalid");
+                                }
+                            }}>
+                                <TriangleAlert className="group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2 text-red-300 hover:text-red-500 cursor-pointer" />
+                            </div>
+                        ) : (
+                            <div className="absolute top-10 right-1 flex flex-col justify-center items-center gap-5" title="Show All Transactions" onClick={() => setViewExcelType("All")}>
+                                <List className="group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2 text-purple-300 hover:text-purple-500 cursor-pointer" />
+                            </div>
+                        )}
                         <h3 className="text-lg font-semibold text-black mb-2">
                             Conversion Complete 🎉
                         </h3>
@@ -408,9 +422,9 @@ export default function FilePreview({
                             Download Converted File
                         </a>
                         <div className="flex gap-5 justify-center items-center mt-6">
-                            <label className="text-gray-700 text-sm border-r pr-5">Total Transaction: {convertedFileResult.summary.totalRows} Transaction(s)</label>
+                            <label className="text-purple-700 text-sm border-r pr-5">Total Transaction: {convertedFileResult.summary.totalRows} Transaction(s)</label>
                             <label className="text-green-600 text-sm border-r pr-5">Valid Transaction: {convertedFileResult.summary.validTransactions} Transaction(s)</label>
-                            <label className="text-red-600 text-sm pr-6">Invalid Transaction: {convertedFileResult.summary.invalidTransactions} Transaction(s)</label>
+                            <label className="text-red-600 text-sm pr-6">Invalid Transaction: {convertedFileResult.summary.invalidTransactions.length} Transaction(s)</label>
                         </div>
                     </div>
                 ) : (
