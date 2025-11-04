@@ -24,7 +24,7 @@ export const BANKS: {
             "Transaction Original Amount Currency": "",
         },
     },
-    // BBL (Complete, Note: Is it expected for the header and the first data has a 1 row empty inbetween)
+    // BBL (Complete)
     {
         code: "BBL",
         name: "Bangkok Bank",
