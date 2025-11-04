@@ -30,6 +30,11 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel, v
         return label;
     };
 
+    const visibleRows =
+        viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0
+            ? normalizedContent.filter((_, rowIndex) => invalidTransactions.includes(rowIndex + 1))
+            : normalizedContent;
+
     return (
         <div onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
@@ -49,29 +54,51 @@ export default function ExcelTablePreview({ content, onCellClick, activeLabel, v
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-300">
-                    {(viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0
-                        ? normalizedContent.filter((_, rowIndex) => invalidTransactions?.includes(rowIndex + 1))
-                        : normalizedContent
-                    )
-                        .slice(0, 200).map((row, rowIndex) => (
-                            <tr key={rowIndex}>
-                                <td className={`bg-gray-600/10 text-gray-700 px-2 py-2 font-bold text-sm text-center backdrop-blur-sm border-r border-gray-200 w-12 sticky left-0 z-10`}>
-                                    {(viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0) ? invalidTransactions[rowIndex] : rowIndex + 1}
+                    {visibleRows.slice(0, 200).map((row, rowIndex) => {
+                        // determine the original row index
+                        const originalRowIndex =
+                            viewExcelType === "Invalid" && invalidTransactions
+                                ? invalidTransactions[rowIndex]
+                                : rowIndex + 1;
+
+                        const isInvalidRow =
+                            viewExcelType === "Invalid" &&
+                            invalidTransactions?.includes(originalRowIndex);
+
+                        return (
+                            <tr
+                                key={rowIndex}
+                                className={`${isInvalidRow
+                                        ? "bg-red-100 hover:bg-red-200 text-red-700"
+                                        : "hover:bg-gray-200/60"
+                                    } transition-colors`}
+                            >
+                                <td
+                                    className={`px-2 py-2 font-bold text-sm text-center border-r border-gray-200 w-12 sticky left-0 z-10 ${isInvalidRow
+                                            ? "bg-red-200 text-red-800"
+                                            : "bg-gray-600/10 text-gray-700"
+                                        }`}
+                                >
+                                    {originalRowIndex}
                                 </td>
                                 {row.map((cell, cellIndex) => (
                                     <td
                                         key={cellIndex}
                                         onClick={() =>
                                             onCellClick &&
-                                            onCellClick(rowIndex + 1, getColumnLabel(cellIndex), cell)
+                                            onCellClick(originalRowIndex, getColumnLabel(cellIndex), cell)
                                         }
-                                        className={`text-gray-800 px-4 py-2 whitespace-nowrap text-sm border-r border-gray-200 hover:bg-gray-200/60 active:bg-gray-300 transition-colors cursor-pointer select-none`}
+                                        className={`px-4 py-2 whitespace-nowrap text-sm border-r border-gray-200 cursor-pointer select-none ${isInvalidRow
+                                                ? "bg-red-100 text-red-800 hover:bg-red-200"
+                                                : "text-gray-800 active:bg-gray-300"
+                                            }`}
                                     >
                                         {cell}
                                     </td>
                                 ))}
                             </tr>
-                        ))}
+                        );
+                    })}
                 </tbody>
             </table>
             {content.length > 200 && !(viewExcelType === "Invalid" && invalidTransactions && invalidTransactions.length > 0) && (
