@@ -64,7 +64,6 @@ export async function convertFileInFrontend(
   let totalRows = renamed.length;
   let validTransactions = 0;
   let invalidTransactions = [];
-  const invalidTransactionRows: { index: number; }[] = [];
 
 
   for (const [index, r] of renamed.entries()) {

@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, Download, List, RefreshCw, TriangleAlert } f
 import ExcelTablePreview from "./excel-review";
 import { FileData } from "@/types/file-data";
 import { convertFileInFrontend } from "@/services/convert-service";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { BANKS } from "@/constants/bank";
 import { parseCell } from "@/utils/parse-cell";
 import { toFixedCurrencyNumber, toNumber } from "@/utils/to-number";
@@ -105,6 +105,8 @@ export default function FilePreview({
         setConvertedFileResult(null)
     }, [fieldInfo]);
 
+    const cleanIdValue = (val: string) => val.replace(/[-,\s]/g, "");
+
     const handleConvert = async () => {
         if (!file.file) return alert("No file available for conversion");
         setLoading(true);
@@ -146,7 +148,6 @@ export default function FilePreview({
 
         try {
             const result = await convertFileInFrontend(file.file, mappedData);
-            console.log(result)
             setConvertedFileResult(result);
         } catch (err) {
             console.error(err);
@@ -230,6 +231,11 @@ export default function FilePreview({
                 }
                 else if (ref.startsWith("[") && ref.endsWith("]")) newInfo[i].value = safeGetValue(ref);
                 else newInfo[i].value = ref;
+
+                console.log(f.key)
+                if (f.key === "Account ID *" || f.key === "Statement ID *") {
+                    newInfo[i].value = cleanIdValue(newInfo[i].value);
+                }
             } else {
                 const { col, row } = safeParse(ref);
                 newInfo[i].col = col;
@@ -295,6 +301,9 @@ export default function FilePreview({
                                                 let val = e.target.value;
                                                 if (label.trim() === "Opening balance amount *") {
                                                     val = val.replace(/,/g, "");
+                                                }
+                                                if (label.trim() === "Account ID *" || label.trim() === "Statement ID *") {
+                                                    val = val.replace(/[,\-\s]/g, "");
                                                 }
                                                 newInfo[index] = {
                                                     ...newInfo[index],
