@@ -18,7 +18,6 @@ export default function UploadArea({
 }) {
 
     const handleDivClick = () => {
-        console.log("TESTING INPUT CLICK")
         const input = document.getElementById("file-upload") as HTMLInputElement;
         if (input && !isLoading) input.click();
     };
