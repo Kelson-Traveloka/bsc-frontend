@@ -1,5 +1,4 @@
 "use client";
-import { ChevronDown, ChevronRight, Download, List, RefreshCw, TriangleAlert } from "lucide-react";
 import ExcelTablePreview from "./excel-review";
 import { FileData } from "@/types/file-data";
 import { convertFileInFrontend } from "@/services/convert-service";
@@ -272,11 +271,7 @@ export default function FilePreview({
                             onClick={() => setIsTransactionOpen(!isTransactionOpen)}
                             className="flex w-fit justify-between items-center my-3 p-3 pt-3.5 text-left"
                         >
-                            {isTransactionOpen ? (
-                                <ChevronDown className="w-5 h-5 text-gray-400" />
-                            ) : (
-                                <ChevronRight className="w-5 h-5 text-gray-400" />
-                            )}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className={`lucide lucide-chevron-down-icon lucide-chevron-down w-5 h-5 text-gray-400 hover:text-gray-700 transition-all duration-300 ease-in-out ${isTransactionOpen ? "" : "-rotate-90"}`}><path d="m6 9 6 6 6-6" /></svg>
                         </button>
                     )}
                 </div>
@@ -401,7 +396,7 @@ export default function FilePreview({
                 {!loading && convertedFileResult ? (
                     <div className="text-center relative">
                         <div className="absolute top-1 right-1 flex flex-col justify-center items-center gap-5" title="Convert Again" onClick={handleConvert}>
-                            <RefreshCw className="group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2 text-blue-300 hover:text-blue-500 cursor-pointer" />
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-refresh-cw-icon lucide-refresh-cw group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2 text-blue-300 hover:text-blue-500 cursor-pointer hover:rotate-180"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></svg>
                         </div>
                         {viewExcelType === "All" ? (
                             <div className="absolute top-10 right-1 flex flex-col justify-center items-center gap-5" title="Show Invalid Transactions" onClick={() => {
@@ -409,11 +404,15 @@ export default function FilePreview({
                                     setViewExcelType("Invalid");
                                 }
                             }}>
-                                <TriangleAlert className="group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2 text-red-300 hover:text-red-500 cursor-pointer" />
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-triangle-alert-icon lucide-triangle-alert hover:scale-101 group transition-all duration-300 w-5 h-5 mr-2 text-red-300 hover:text-red-500 cursor-pointer">
+                                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" className="group-hover:animate-pulse" />
+                                    <path d="M12 9v4" />
+                                    <path d="M12 17h.01" />
+                                </svg>
                             </div>
                         ) : (
                             <div className="absolute top-10 right-1 flex flex-col justify-center items-center gap-5" title="Show All Transactions" onClick={() => setViewExcelType("All")}>
-                                <List className="group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2 text-purple-300 hover:text-purple-500 cursor-pointer" />
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-list-icon lucide-list group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2 text-purple-300 hover:text-purple-500 cursor-pointer"><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></svg>
                             </div>
                         )}
                         <h3 className="text-lg font-semibold text-black mb-2">
@@ -425,9 +424,15 @@ export default function FilePreview({
                         <a
                             href={convertedFileResult.url}
                             download={`${file.name.replace(/\.\w+$/, "")}_converted.txt`}
-                            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                            className="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                         >
-                            <Download className="w-5 h-5 mr-2" />
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-download-icon lucide-download w-5 h-5 mr-2">
+                                <path d="M12 15V3"
+                                    className="transition-transform duration-300 group-hover:translate-y-1 group-hover:opacity-80" />
+                                <path d="m7 10 5 5 5-5"
+                                    className="transition-transform duration-300 group-hover:translate-y-1 group-hover:opacity-80" />
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            </svg>
                             Download Converted File
                         </a>
                         <div className="flex gap-5 justify-center items-center mt-6">
@@ -452,7 +457,7 @@ export default function FilePreview({
                                 onClick={handleConvert}
                                 className="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold rounded-xl hover:from-gray-600 hover:to-gray-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                             >
-                                <RefreshCw className="group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2" />
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-refresh-cw-icon lucide-refresh-cw group-hover:rotate-180 transition-all duration-300 w-5 h-5 mr-2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></svg>
                                 Convert File
                             </button>
                         )}

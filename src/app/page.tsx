@@ -1,5 +1,4 @@
 "use client";
-import * as XLSX from "xlsx";
 import React, { useState, useCallback } from "react";
 import UploadArea from "@/components/upload-area";
 import FilePreview from "@/components/file-review";

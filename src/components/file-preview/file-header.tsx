@@ -1,6 +1,5 @@
 import { FileData } from '@/types/file-data';
-import { formatFileSize } from '@/utils/file-helper';
-import { CheckCircle } from 'lucide-react'
+import { formatFileSize } from '@/utils/file-helper'; 
 import React from 'react'
 
 const FileHeader = ({
@@ -15,7 +14,7 @@ const FileHeader = ({
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-green-100 animate-pulse rounded-full flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-green-400" />
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-circle-check-big-icon lucide-circle-check-big w-6 h-6 text-green-400"><path d="M21.801 10A10 10 0 1 1 17 3.335" /><path d="m9 11 3 3L22 4" /></svg>
                     </div>
                     <div>
                         <h3 className="text-lg font-semibold text-black">{file.name}</h3>
