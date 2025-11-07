@@ -22,7 +22,7 @@ export default function UploadArea({
     };
 
     return (
-        <div className={`rounded-2xl shadow-md border border-gray-200 p-4 transition-all duration-300 ${isDragging && "scale-105"}`}>
+        <div className={`flex-1 rounded-2xl shadow-md border border-gray-200 p-4 transition-all duration-300 ${isDragging && "scale-105"}`}>
             <div
                 className={`group border border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-300 ${isDragging
                     ? "border-gray-600/70 bg-gradient-to-br from-white to-white via-gray-600/10"

@@ -26,6 +26,7 @@ export async function convertFileInFrontend(
     invalidTransactions: number[];
   };
 }> {
+  console.log(mapping)
   const df = await readExcelFile(file);
   if (!df.length) throw new Error("❌ No valid sheet found in file.");
 
@@ -48,11 +49,27 @@ export async function convertFileInFrontend(
     if (colIdx != null && headerValues[Number(colIdx)]) colMap[label] = headerValues[Number(colIdx)];
   }
 
+  console.log(rows)
+  let test = 0;
   const renamed: Partial<MappedTransactionRow>[] = rows.map((r) => {
     const newRow: Partial<MappedTransactionRow> = {};
     (Object.entries(colMap) as [keyof MappedTransactionRow, string][]).forEach(([label, origCol]) => {
       const value = r[origCol];
-      if (value !== undefined && value !== null) {
+      if (label === "Description" && mapping['Description'].startsWith("concat(")) {
+        const inside = mapping['Description'].slice(7, -1);
+        const parts = inside.split(",").map(p => p.trim());
+        const values = parts.map(p => {
+          if (p.startsWith("[") && p.endsWith("]")) {
+            const { col } = parseCell(p, { asIndex: true });
+            if (col != null) {
+              const key = headerValues[Number(col)];
+              return r[key] ?? "";
+            }
+          }
+          return "";
+        });
+        (newRow as Record<keyof MappedTransactionRow, unknown>)[label] = values[0] + " " + values[1];
+      } else if (value !== undefined && value !== null) {
         (newRow as Record<keyof MappedTransactionRow, unknown>)[label] = value;
       }
     });
@@ -60,6 +77,7 @@ export async function convertFileInFrontend(
     return newRow;
   });
 
+  console.log(renamed)
   const sameColDebitCredit = (mapping["Debit Amount *"] == mapping["Credit Amount *"]);
   let totalRows = renamed.length;
   let validTransactions = 0;

@@ -136,7 +136,9 @@ export default function FilePreview({
             const displaysValue =
                 !(label.toLowerCase().includes("date") || transactionLabels.includes(label));
 
-            if (displaysValue) {
+            if (label === "Description" && info.value.startsWith("concat(")) {
+                mappedData[label] = info.value || "";
+            } else if (displaysValue) {
                 mappedData[label] = info.value || "";
             } else if (info.col && info.row !== null) {
                 mappedData[label] = `[${info.col}${Number(info.row)}]`;
@@ -170,7 +172,10 @@ export default function FilePreview({
     const handleBankSelect = (bank: typeof BANKS[number]) => {
         setSelectedBank(bank.code);
 
-        const newInfo = [...fieldInfo];
+        const newInfo: { value: string; col: string; row: number | null }[] = Array.from(
+            { length: headerLabels.length + transactionLabels.length },
+            () => ({ value: "", col: "", row: null })
+        );
 
         const safeParse = (ref?: string | number | null) => {
             if (!ref) return { col: "", row: null };
@@ -210,6 +215,7 @@ export default function FilePreview({
             { key: "Transaction Original Amount Currency", type: "colrow" },
         ] as const;
 
+
         fieldMap.forEach((f, i) => {
             const ref = bank.value[f.key];
             if (f.type === "value") {
@@ -231,14 +237,17 @@ export default function FilePreview({
                 else if (ref.startsWith("[") && ref.endsWith("]")) newInfo[i].value = safeGetValue(ref);
                 else newInfo[i].value = ref;
 
-                console.log(f.key)
                 if (f.key === "Account ID *" || f.key === "Statement ID *") {
                     newInfo[i].value = cleanIdValue(newInfo[i].value);
                 }
             } else {
-                const { col, row } = safeParse(ref);
-                newInfo[i].col = col;
-                newInfo[i].row = row;
+                if (ref.startsWith("concat(") && ref.endsWith(")")) {
+                    newInfo[i].value = ref
+                } else {
+                    const { col, row } = safeParse(ref);
+                    newInfo[i].col = col;
+                    newInfo[i].row = row;
+                }
             }
         });
 
@@ -287,9 +296,10 @@ export default function FilePreview({
                                         <input
                                             type="text"
                                             data-field-index={index}
-                                            value={(title == "Transactions" || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + (fieldInfo[index].row !== null ? (Number(fieldInfo[index].row)) : "") + "]") : label === "Opening balance amount *"
-                                                ? toFixedCurrencyNumber(fieldInfo[index].value)
-                                                : fieldInfo[index].value}
+                                            value={
+                                                ((title == "Transactions" && !fieldInfo[index].value.startsWith("concat(")) || label.toLowerCase().includes("date")) ? ("[" + fieldInfo[index].col + (fieldInfo[index].row !== null ? (Number(fieldInfo[index].row)) : "") + "]")
+                                                    : label === "Opening balance amount *" ? toFixedCurrencyNumber(fieldInfo[index].value)
+                                                        : fieldInfo[index].value}
                                             readOnly={title == "Transactions" || label.toLowerCase().includes("date")}
                                             onChange={(e) => {
                                                 const newInfo = [...fieldInfo];

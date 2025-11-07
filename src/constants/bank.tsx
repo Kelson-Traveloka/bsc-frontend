@@ -170,7 +170,7 @@ export const BANKS: {
             "Internal Bank Transaction Code": "",
             "Debit Amount *": "[D25]",
             "Credit Amount *": "[E25]",
-            "Description": "[C25]",
+            "Description": "concat([C25],[K25])",
             "Reference": "",
             "Transaction Original Amount": "",
             "Transaction Original Amount Currency": "",
