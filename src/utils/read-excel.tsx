@@ -36,6 +36,7 @@ export async function readExcelFile(file: File): Promise<string[][]> {
 
         let text = new TextDecoder("utf-8").decode(buffer);
         if (/[�]/.test(text) || /[A-Za-z]/.test(text) && !/[ก-๙]/.test(text)) {
+            console.log("MASUK ??????")
             try {
                 text = new TextDecoder("windows-874").decode(buffer);
                 console.warn("🔄 Fallback: decoded as CP874 (Thai)");
